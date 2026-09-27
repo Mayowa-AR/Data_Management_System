@@ -1,0 +1,1874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OA Data Management System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ECEEF2; --surface:#FAFBFC; --raised:#FFFFFF;
+    --ink:#172230; --ink-2:#394556; --muted:#5E6878; --line:#D5D9E0; --line-2:#E4E7EC;
+    --tape:#B3264C; --tape-deep:#7C1535; --tape-wash:#F7E4E9;
+    --gain:#1E6A56; --gain-wash:#DDEEE8; --warn:#94600F; --warn-wash:#F6ECD9;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+    --r:6px;
+    --sh-1:0 1px 1px rgba(23,34,48,.04),0 1px 3px rgba(23,34,48,.06);
+    --sh-2:0 1px 2px rgba(23,34,48,.05),0 6px 16px -6px rgba(23,34,48,.12),0 18px 36px -18px rgba(124,21,53,.10);
+    --sh-3:0 2px 4px rgba(23,34,48,.06),0 16px 32px -12px rgba(23,34,48,.20),0 32px 64px -24px rgba(124,21,53,.18);
+    --spring:cubic-bezier(.34,1.4,.64,1);
+    --serif:'Libre Caslon Text',Georgia,serif; --sans:'Hanken Grotesk',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{background:var(--paper);color:var(--ink)}
+  body{font-family:var(--sans);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;min-height:100vh;
+    background:
+      radial-gradient(1200px 500px at 90% -10%, rgba(179,38,76,.07), transparent 60%),
+      radial-gradient(900px 600px at -10% 0%, rgba(23,34,48,.06), transparent 55%),
+      var(--paper);}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.09 0 0 0 0 0.13 0 0 0 0 0.19 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  #shell{position:relative;z-index:1}
+  .serif{font-family:var(--serif)} .mono{font-family:var(--mono);font-feature-settings:"tnum";white-space:nowrap}
+  h1,h2,h3{font-family:var(--serif);letter-spacing:-.03em;line-height:1.15;font-weight:400}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* top bar */
+  .topbar{background:rgba(250,251,252,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+  .brand{font-family:var(--serif);font-size:19px;letter-spacing:-.02em;display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+  .brand-mark{width:10px;height:22px;background:var(--tape);border-radius:1px;box-shadow:2px 0 0 var(--tape-deep)}
+  .navlink{font-weight:500;color:var(--ink-2);padding:6px 12px;border-radius:var(--r);text-decoration:none;font-size:14px;
+    transition:background-color .2s ease,color .2s ease}
+  .navlink:hover{background:var(--line-2);color:var(--ink)}
+  .navlink[aria-current="page"]{color:var(--tape-deep);background:var(--tape-wash)}
+  .count{display:inline-block;min-width:20px;text-align:center;font-size:11.5px;font-weight:700;background:var(--tape);color:#fff;border-radius:999px;padding:0 6px;margin-left:6px;line-height:18px}
+  /* sidebar */
+  #sidebar{position:fixed;top:0;bottom:0;left:0;width:264px;z-index:40;display:flex;flex-direction:column;background:rgba(250,251,252,.94);backdrop-filter:blur(12px);border-right:1px solid var(--line)}
+  .with-nav #appwrap{padding-left:264px}
+  .side-brand{display:flex;align-items:flex-start;gap:10px;padding:22px 20px 18px;text-decoration:none;color:var(--ink)}
+  .side-brand .brand-mark{margin-top:3px;flex:none}
+  .side-brand b{display:block;font-family:var(--serif);font-weight:400;font-size:21px;letter-spacing:-.02em;line-height:1.1}
+  .side-brand small{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;letter-spacing:.01em}
+  .side-new{margin:0 16px 8px;justify-content:center}
+  .side-scroll{flex:1;overflow-y:auto;padding-bottom:12px}
+  .side-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:18px 24px 6px}
+  .side-link{display:flex;align-items:center;gap:11px;margin:1px 12px;padding:8px 12px;border-radius:8px;color:var(--ink-2);font-weight:500;font-size:14.5px;text-decoration:none;transition:background-color .15s,color .15s}
+  .side-link svg{width:17px;height:17px;flex:none;opacity:.75}
+  .side-link:hover{background:var(--line-2);color:var(--ink)}
+  .side-link[aria-current="page"]{background:var(--tape-wash);color:var(--tape-deep);font-weight:600}
+  .side-link[aria-current="page"] svg{opacity:1}
+  .side-link .count{margin-left:auto}
+  .side-foot{border-top:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:10px}
+  #mobilebar{position:sticky;top:0;z-index:30;display:none;align-items:center;gap:10px;padding:10px 16px;background:rgba(250,251,252,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  #scrim{position:fixed;inset:0;background:rgba(23,34,48,.35);z-index:35}
+  #fab{position:fixed;right:16px;bottom:16px;z-index:30;display:none;box-shadow:var(--sh-3)}
+  @media (max-width:1023px){
+    #sidebar{transform:translateX(-100%);transition:transform .4s var(--spring);box-shadow:var(--sh-3)}
+    #sidebar.open{transform:none}
+    .with-nav #appwrap{padding-left:0}
+    .with-nav #mobilebar{display:flex}
+    .with-nav #fab:not([hidden]){display:inline-flex}
+  }
+  /* charts */
+  .viz{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--grid:#e6e7ea;--axis:#c3c7ce;--vmuted:#7b8290}
+  .viz svg{width:100%;height:auto;display:block;overflow:visible}
+  .viz text{font-family:var(--sans);font-size:13.5px;fill:var(--vmuted)}
+  .viz .vlabel{fill:var(--ink-2);font-weight:600}
+  .viz .hit{fill:transparent;cursor:crosshair;outline:none}
+  .viz .hit:hover,.viz .hit:focus-visible{fill:rgba(23,34,48,.04)}
+  .viz-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin-bottom:8px}
+  .viz-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+  .viz-tip{position:fixed;z-index:60;pointer-events:none;background:var(--raised);border:1px solid var(--line);border-radius:8px;box-shadow:var(--sh-3);padding:8px 12px;font-size:13px;min-width:140px}
+  .viz-tip .t-head{color:var(--muted);font-size:12px;margin-bottom:4px}
+  .viz-tip .t-row{display:flex;align-items:center;gap:8px;line-height:1.5}
+  .viz-tip .t-row b{font-family:var(--mono);font-weight:600;color:var(--ink)}
+  .viz-tip .t-key{width:12px;height:2px;border-radius:2px;flex:none}
+  details.tbl summary{cursor:pointer;font-size:13px;color:var(--ink-2);font-weight:600;margin-top:10px}
+  details.tbl table{margin-top:8px}
+  .todo{display:flex;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid var(--line-2);text-decoration:none;color:inherit;transition:background-color .15s}
+  .todo:last-child{border-bottom:0}
+  .todo:hover{background:#F3F4F7}
+  .todo .dot{width:10px;height:10px;border-radius:99px;flex:none;background:var(--ink-2)}
+  .todo .dot.loss{background:var(--tape)} .todo .dot.warn{background:var(--warn)} .todo .dot.gain{background:var(--gain)}
+  .who{display:flex;align-items:center;gap:10px;line-height:1.25}
+  .avatar{width:32px;height:32px;border-radius:999px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;flex:none}
+
+  /* surfaces */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh-1)}
+  .card-raised{background:var(--raised);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh-2)}
+  .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .hint{font-size:13px;color:var(--muted);line-height:1.5}
+  .banner{display:flex;gap:14px;align-items:flex-start;padding:14px 18px;border-radius:10px;border:1px solid var(--line);background:var(--raised);font-size:14.5px;line-height:1.55}
+  .banner::before{content:"";width:4px;align-self:stretch;border-radius:4px;background:var(--ink-2);flex:none}
+  .banner.warn{background:var(--warn-wash);border-color:#E8D4AE}.banner.warn::before{background:var(--warn)}
+  .banner.loss{background:var(--tape-wash);border-color:#EBC3CF}.banner.loss::before{background:var(--tape)}
+  .banner.gain{background:var(--gain-wash);border-color:#BFDDD2}.banner.gain::before{background:var(--gain)}
+
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:9px 16px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;
+    transition:transform .3s var(--spring),background-color .2s,box-shadow .2s,color .2s;text-decoration:none;white-space:nowrap;line-height:1.3}
+  .btn:active{transform:translateY(1px) scale(.98)}
+  .btn-primary{background:var(--tape);color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 4px 12px -4px rgba(179,38,76,.5)}
+  .btn-primary:hover{background:var(--tape-deep);transform:translateY(-1px)}
+  .btn-ghost{background:var(--raised);color:var(--ink);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--ink-2);transform:translateY(-1px)}
+  .btn-quiet{background:transparent;color:var(--ink-2);padding:6px 10px}
+  .btn-quiet:hover{background:var(--line-2);color:var(--ink)}
+  :focus-visible{outline:2px solid var(--tape);outline-offset:2px;border-radius:4px}
+
+  /* forms */
+  .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .field > span{font-size:13px;font-weight:600;color:var(--ink-2)}
+  .field > span.hint{font-weight:400;color:var(--muted)}
+  .field > span.err{color:var(--tape-deep);font-weight:600;font-size:12.5px}
+  .field > span em{font-style:normal;color:var(--tape);margin-left:2px}
+  .input,select.input,textarea.input{width:100%;background:var(--raised);border:1px solid var(--line);border-radius:var(--r);padding:9px 11px;font:inherit;font-size:14.5px;color:var(--ink);line-height:1.4;
+    transition:border-color .15s,box-shadow .15s}
+  .input:hover{border-color:#B9C0CB}
+  .input:focus{outline:none;border-color:var(--tape);box-shadow:0 0 0 3px rgba(179,38,76,.14)}
+  .input:disabled{background:var(--surface);border-color:var(--line-2);color:var(--ink);opacity:1;cursor:default;-webkit-text-fill-color:var(--ink)}
+  textarea.input{min-height:92px;resize:vertical;line-height:1.6}
+  .input.num{text-align:right}
+  .input[aria-invalid="true"]{border-color:var(--tape);background:#FFF8FA}
+  .err{font-size:12.5px;color:var(--tape-deep);font-weight:600}
+  .section{padding:var(--s6);border-bottom:1px solid var(--line-2)}
+  .section:last-of-type{border-bottom:0}
+  .section-head{display:flex;justify-content:space-between;gap:var(--s4);align-items:baseline;margin-bottom:var(--s5)}
+  .section-head h2{font-size:24px}
+  .rows .row{position:relative;padding-right:48px!important;display:grid;gap:10px;align-items:end;padding:12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);margin-bottom:10px;animation:rise .35s var(--spring)}
+  .chip-check{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--raised);cursor:pointer;
+    transition:border-color .15s,background-color .15s,transform .25s var(--spring)}
+  .chip-check:hover{border-color:var(--ink-2)}
+  .chip-check:active{transform:scale(.97)}
+  .chip-check:has(input:checked){background:var(--tape-wash);border-color:var(--tape);color:var(--tape-deep);font-weight:600}
+  .chip-check:has(input:disabled){cursor:default}
+  .chip-check input{accent-color:var(--tape)}
+  .sendbox{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--raised);cursor:pointer;transition:border-color .15s,background-color .15s}
+  .sendbox:hover{border-color:var(--ink-2)}
+  .sendbox:has(input:checked){border-color:var(--tape);background:var(--tape-wash)}
+  .sendbox input{accent-color:var(--tape);width:18px;height:18px;margin-top:3px;flex:none}
+  .jumps a{display:block;padding:5px 10px;border-left:2px solid var(--line);color:var(--muted);font-size:13.5px;text-decoration:none;transition:color .15s,border-color .15s}
+  .row-x{position:absolute;top:8px;right:6px}
+  .jumps a[data-sec]::before{content:'○';display:inline-block;width:18px;color:var(--muted)}
+  .jumps a.done::before{content:'✓';color:var(--gain);font-weight:700}
+  .jumps a.optional:not(.done)::before{content:'–'}
+  .suggest{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:25;background:var(--raised);border:1px solid var(--line);border-radius:8px;box-shadow:var(--sh-3);max-height:280px;overflow:auto;padding:4px}
+  .suggest [role=option]{padding:8px 10px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1.35}
+  .suggest [role=option]:hover,.suggest [role=option][aria-selected=true]{background:var(--line-2)}
+  .jumps a:hover{color:var(--ink);border-color:var(--ink-2)}
+
+  /* tombstone: the signature */
+  .tomb-wrap{perspective:900px}
+  .tomb{position:relative;text-align:center;padding:40px 28px 34px;border-radius:5px;
+    background:
+      linear-gradient(115deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.55) 38%, rgba(255,255,255,0) 39%),
+      linear-gradient(180deg, #F9FAFC 0%, #E7EAF0 100%);
+    border:1px solid rgba(23,34,48,.14);
+    box-shadow:inset 0 1px 0 #fff, inset 0 0 0 5px rgba(255,255,255,.5), inset 0 -3px 0 rgba(23,34,48,.06), var(--sh-3);
+    transform:rotateX(2deg);transition:transform .6s var(--spring)}
+  .tomb:hover{transform:rotateX(0deg) translateY(-3px)}
+  .tomb .ribbon{position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:56px;height:14px;background:var(--tape);border-radius:0 0 2px 2px;box-shadow:0 2px 0 var(--tape-deep)}
+  .tomb-plinth{height:16px;margin:0 -10px;border-radius:0 0 6px 6px;background:linear-gradient(180deg,#2A3546,#172230);box-shadow:0 12px 24px -10px rgba(23,34,48,.5)}
+  .tomb-client{font-family:var(--serif);font-size:26px;letter-spacing:-.03em;line-height:1.15;word-break:break-word}
+  .tomb-rule{width:40px;height:1px;background:var(--ink);opacity:.35;margin:16px auto}
+  .tomb-deal{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--ink-2);line-height:1.45}
+  .tomb-value{font-family:var(--serif);font-size:44px;letter-spacing:-.04em;line-height:1;margin:20px 0 6px;color:var(--tape-deep)}
+  .tomb-acted{font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+  .tomb-date{font-size:13px;color:var(--muted);margin-top:18px}
+  .tomb-foot{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+  .tomb .empty{color:#A2AAB6}
+
+  /* data */
+  .stat{padding:var(--s4) var(--s5);border-right:1px solid var(--line-2);min-width:0}
+  .stat:last-child{border-right:0}
+  .stat .v{font-family:var(--serif);font-size:clamp(21px,1.85vw,28px);letter-spacing:-.03em;line-height:1.1;margin-top:4px;white-space:nowrap}
+  .stat .s{font-size:12.5px;color:var(--muted)}
+  table.data{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+  table.data th{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;white-space:nowrap}
+  table.data th.r, table.data td.r{text-align:right}
+  table.data td{padding:12px 14px;border-bottom:1px solid var(--line-2);vertical-align:top}
+  table.data tbody tr{transition:background-color .15s}
+  table.data tbody tr.link{cursor:pointer}
+  table.data tbody tr.link:hover{background:#F3F4F7}
+  table.data tbody tr.link:focus-visible{outline:2px solid var(--tape);outline-offset:-2px}
+  table.data tbody tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;line-height:1.6}
+  .pill-gain{background:var(--gain-wash);color:var(--gain)}
+  .pill-loss{background:var(--tape-wash);color:var(--tape-deep)}
+  .pill-warn{background:var(--warn-wash);color:var(--warn)}
+  .pill-neutral{background:var(--line-2);color:var(--ink-2)}
+  .gain{color:var(--gain)} .loss{color:var(--tape-deep)} .warn{color:var(--warn)}
+  .kv{display:grid;grid-template-columns:minmax(120px,40%) 1fr;gap:6px 16px;font-size:14px}
+  .kv dt{color:var(--muted)} .kv-fig dd{text-align:right} .kv dd{margin:0;min-width:0;word-break:break-word}
+  .with-nav .lg\:top-24{top:2rem}
+  .with-nav .top-24{top:2rem}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tabs .tab{padding:10px 14px;font-weight:600;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s,border-color .15s}
+  .tabs .tab:hover{color:var(--ink)}
+  .tabs .tab[aria-selected="true"]{color:var(--tape-deep);border-color:var(--tape)}
+  .lens{display:inline-flex;background:var(--line-2);border-radius:999px;padding:3px;gap:2px}
+  .lens button{white-space:nowrap;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;color:var(--muted);transition:background-color .2s,color .2s,transform .25s var(--spring)}
+  .lens button:hover{color:var(--ink)}
+  .lens button:active{transform:scale(.96)}
+  .lens button[aria-pressed="true"]{background:var(--raised);color:var(--ink);box-shadow:var(--sh-1)}
+  .meter{height:6px;border-radius:999px;background:var(--line-2);overflow:hidden}
+  .meter > i{display:block;height:100%;background:var(--ink-2);border-radius:999px;transform-origin:left;animation:grow .7s var(--spring)}
+  .timeline li{position:relative;padding-left:20px;padding-bottom:12px;font-size:13.5px;line-height:1.45}
+  .timeline li::before{content:"";position:absolute;left:3px;top:6px;width:7px;height:7px;border-radius:99px;background:var(--ink-2)}
+  .timeline li::after{content:"";position:absolute;left:6px;top:16px;bottom:0;width:1px;background:var(--line)}
+  .timeline li:last-child::after{display:none}
+  .timeline li.returned::before{background:var(--tape)} .timeline li.approved::before{background:var(--gain)}
+  .access-card{border:1px solid var(--line-2);border-radius:10px;padding:14px 16px;background:var(--raised)}
+  .acct{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--raised);
+    transition:border-color .15s,transform .3s var(--spring)}
+  .acct:hover{border-color:var(--ink-2);transform:translateY(-1px)}
+  .acct:active{transform:scale(.99)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,20px);opacity:0;background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;font-size:14px;
+    box-shadow:var(--sh-3);transition:opacity .25s,transform .4s var(--spring);z-index:50;pointer-events:none}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .fade-in{animation:rise .45s var(--spring) both}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+  @media (max-width:767px){
+    .section{padding:var(--s5) var(--s4)}
+    .stat{border-right:0;border-bottom:1px solid var(--line-2)}
+    .tomb-value{font-size:36px}
+  }
+</style>
+</head>
+<body>
+<div id="shell">
+  <aside id="sidebar" hidden></aside>
+  <div id="scrim" hidden></div>
+  <div id="appwrap">
+    <div id="mobilebar" hidden></div>
+    <main id="app" class="max-w-[1240px] mx-auto px-4 md:px-8 py-8 md:py-10"></main>
+  </div>
+  <a id="fab" class="btn btn-primary" href="#new" hidden>+ New deal sheet</a>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="viz-tip" id="vizTip" role="tooltip" hidden></div>
+
+<script>
+/* ---------- reference data ---------- */
+const PRACTICES = ['Corporate M&A','Private Equity','Banking & Finance','Capital Markets','Projects & Energy','Real Estate','Restructuring','Tax','Dispute Resolution','Employment'];
+const DEAL_TYPES = ['Acquisition','Disposal','Merger','Joint venture','Financing','Refinancing','IPO / listing','Bond / note issue','Fundraising','Restructuring','Other'];
+const ROLES = {
+  'Partner':{rate:650,cost:260}, 'Counsel':{rate:520,cost:200}, 'Senior associate':{rate:420,cost:150}, 'Associate':{rate:300,cost:100},
+  'Trainee':{rate:150,cost:45}, 'Paralegal':{rate:120,cost:35}
+};
+const WRITEOFF_REASONS = ['Fee cap or fixed fee exceeded','Scope grew beyond engagement letter','Relationship discount','Over-staffing or inefficiency','Training time for juniors','Deal delayed or aborted','Fee disputed by client','Other'];
+const FEE_ARRANGEMENTS = ['Hourly','Fixed fee','Capped fee','Success / contingent','Blended rate'];
+const REFERABLE = {public:'Publicly referable', anonymised:'Anonymised only', confidential:'Confidential'};
+const LENS_NAMES = {finance:'Finance', mp:'Management', bd:'Business development', partner:'Deal overview'};
+
+/* ---------- people and access ----------
+   Prototype sign-in: accounts live in this file and every password is "demo".
+   Real access control needs a server; see the note on the sign-in page. */
+// People and access levels come from the "Access Level" tab of Completion_Register_Roadmap.xlsx.
+// Review rights are worked out from access level (see canReview). admin: manages People and access.
+const BASE_USERS = [
+  {id:'chuks', name:'Chuks B. Ibechukwu', email:'chuks.ibechukwu@firm.example', title:'Managing Partner', access:'all', review:true, teamRole:'Partner', origination:true, costHistory:[{from:'2025-01-01',rate:'320'},{from:'2026-01-01',rate:'340'}]},
+  {id:'larriena', name:'Larriena St Cyr', email:'larriena.stcyr@firm.example', title:'Practice Manager', access:'all', review:false, admin:true},
+  {id:'howard', name:'Howard Barrie', email:'howard.barrie@firm.example', title:'Senior Partner', access:'partner', review:true, teamRole:'Partner', costHistory:[{from:'2025-01-01',rate:'300'},{from:'2026-01-01',rate:'315'}]},
+  {id:'edward', name:'Edward Baring', email:'edward.baring@firm.example', title:'Partner', access:'partner', review:true, teamRole:'Partner', costHistory:[{from:'2025-01-01',rate:'250'},{from:'2026-01-01',rate:'265'}]},
+  {id:'juanita', name:'Juanita Derex-Briggs', email:'juanita.derex-briggs@firm.example', title:'Counsel', access:'partner', review:true, teamRole:'Counsel', costHistory:[{from:'2025-01-01',rate:'190'},{from:'2026-01-01',rate:'200'}]},
+  {id:'valentina', name:'Valentina Costa', email:'valentina.costa@firm.example', title:'Associate', access:'associate', review:false, teamRole:'Associate', costHistory:[{from:'2025-01-01',rate:'95'},{from:'2026-01-01',rate:'105'}]},
+  {id:'lami', name:'Lami Basorun', email:'lami.basorun@firm.example', title:'Associate', access:'associate', review:false, teamRole:'Associate', costHistory:[{from:'2025-01-01',rate:'90'},{from:'2026-01-01',rate:'100'}]},
+  {id:'taofik', name:'Taofik Atolagbe', email:'taofik.atolagbe@firm.example', title:'Finance Manager', access:'finance', review:false},
+  {id:'hameed', name:'Hameed Adigun', email:'hameed.adigun@firm.example', title:'Business Development Manager', access:'bd', review:false},
+];
+// What each access level can open. Everyone can record a completion; lenses are the register views they see.
+const ACCESS = {
+  all:{label:'All', home:'#home', lenses:['mp','finance','bd'], nav:['register','mine','new']},
+  partner:{label:'Partner', home:'#home', lenses:['partner'], nav:['mine','new','register']},
+  associate:{label:'Associate', home:'#home', lenses:[], nav:['mine','new']},
+  finance:{label:'Finance', prepare:false, home:'#home', lenses:['finance'], nav:['register','mine','new']},
+  bd:{label:'BD', prepare:false, home:'#home', lenses:['bd'], nav:['register','mine','new']},
+};
+const userById=id=>USERS.find(u=>u.id===id);
+const nameOf=id=>userById(id)?.name||'someone';
+const firstName=id=>nameOf(id).split(' ')[0];
+// Partner-level access can review; at "All" level only people graded Partner can (so the practice manager can't).
+const canReview=u=>u.access==='partner'||(u.access==='all'&&u.teamRole==='Partner');
+const activeUsers=()=>USERS.filter(u=>u.status!=='left');
+const reviewers=()=>activeUsers().filter(u=>u.review);
+const feeEarners=()=>activeUsers().filter(u=>u.teamRole);
+const leadPartners=()=>activeUsers().filter(u=>u.teamRole==='Partner'||u.teamRole==='Counsel');
+const rateOf=u=>n(u.rate)||ROLES[u.teamRole]?.rate||0;
+// Cost to the firm per hour: each person has a dated history; the entry in force on a date applies.
+const costEntryOn=(u,date)=>[...(u?.costHistory||[])].filter(c=>c.from<=(date||today())).sort((a,b)=>a.from.localeCompare(b.from)).pop();
+const costOn=(u,date)=>{const e=costEntryOn(u,date); return e?n(e.rate):null};
+const personByName=name=>USERS.find(u=>u.name===name);
+// A deal uses the cost frozen onto it at approval; before that, the cost in force on its completion date; else the grade's standard cost.
+const memberCost=(m,d)=>m.cost!==undefined&&m.cost!==''?n(m.cost):(costOn(personByName(m.name),d?.completed)??ROLES[m.role]?.cost??0);
+const freezeCosts=d=>{d.team=(d.team||[]).map(m=>({...m,cost:String(memberCost({...m,cost:undefined},d))}))};
+const canOriginate=()=>!!me()?.origination;
+// Origination credit: a list of {name, pct} lines set by the managing partner. Older single-% records are read as one line.
+const creditSplit=d=>d.originationSplit||(d.originationPct!==undefined&&d.originationPct!==''?[{name:d.originator,pct:String(d.originationPct)}]:[]);
+const needsCredit=d=>d.status==='approved'&&!creditSplit(d).length;
+const creditText=d=>creditSplit(d).map(l=>`${l.name} ${n(l.pct)}%`).join(', ');
+
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n=v=>{const x=parseFloat(String(v??'').replace(/[, ]/g,''));return isFinite(x)?x:0};
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch{ return d } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch{} },
+  del(k){ try{ localStorage.removeItem(k) }catch{} }
+};
+const CCY='USD';
+const money=(v,ccy=CCY)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:ccy,maximumFractionDigits:0}).format(v||0);
+const moneyC=(v,ccy=CCY)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:ccy,notation:'compact',maximumFractionDigits:1}).format(v||0);
+const pct=v=>isFinite(v)?Math.round(v*100)+'%':'–';
+const hrs=v=>new Intl.NumberFormat('en-GB',{maximumFractionDigits:1}).format(v||0);
+const dfmt=d=>d?new Date(d.slice(0,10)+'T00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'–';
+const mfmt=d=>d?new Date(d+'T00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'}):'';
+const uid=()=>Math.random().toString(36).slice(2,10);
+const today=()=>new Date().toISOString().slice(0,10);
+const list=a=>{a=a.filter(Boolean); return a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]};
+const initials=name=>name.split(' ').map(w=>w[0]).slice(0,2).join('');
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
+
+/* ---------- storage ---------- */
+const KEY='cr.deals.v10', SKEY='cr.session', PKEY='cr.people.v2';
+const normalise=u=>({...u, review:canReview(u), status:u.status||'active'});
+let USERS=(store.get(PKEY,null)||BASE_USERS).map(normalise);
+function savePeople(){ USERS=USERS.map(normalise); store.set(PKEY,USERS) }
+let deals = store.get(KEY,null) || seed();
+function save(){ store.set(KEY,deals) }
+const me=()=>userById(store.get(SKEY,null));
+const cfg=()=>{const u=me(); if(!u) return null; const a=ACCESS[u.access]; return {...a, nav:[...a.nav,...(u.origination?['origination']:[]),...(u.admin?['people']:[])], label:u.title, prepare:a.prepare!==false, review:!!u.review, lens:a.lenses[0]||null}};
+const LKEY='cr.lens';
+const curLens=()=>{const ls=cfg().lenses, v=store.get(LKEY,null); return ls.includes(v)?v:ls[0]};
+const registerDeals=()=>deals.filter(d=>d.status==='approved');
+const reviewQueue=u=>deals.filter(d=>d.status==='in_review'&&d.reviewer===u.id);
+
+/* ---------- clients: one list built from every deal sheet ---------- */
+const normName=v=>String(v||'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ]/g,' ').replace(/\b(the|ltd|limited|plc|llp|llc|inc|co|company|group|holdings)\b/g,' ').replace(/\s+/g,' ').trim();
+function lev(a,b){const m=a.length,k=b.length;if(!m||!k)return m||k;let prev=[...Array(k+1).keys()];for(let i=1;i<=m;i++){const cur=[i];for(let j=1;j<=k;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[k]}
+function clientDirectory(){
+  const m=new Map();
+  [...deals].sort((a,b)=>(a.updatedAt||'').localeCompare(b.updatedAt||'')).forEach(d=>{const nm=d.client?.name?.trim(); if(!nm) return;
+    const prev=m.get(nm); m.set(nm,{...d.client,name:nm,contacts:(d.contacts||[]).filter(c=>c.name).length?d.contacts:(prev?.contacts||[]),relationshipPartner:d.client.relationshipPartner||prev?.relationshipPartner,deals:(prev?.deals||0)+1})});
+  return [...m.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+// Existing clients whose names look like this one: same words, one contains the other, or a close spelling
+function similarClients(name){
+  const q=normName(name); if(q.length<3) return [];
+  return clientDirectory().filter(c=>c.name.toLowerCase()!==String(name).trim().toLowerCase()).map(c=>{
+    const t=normName(c.name), qt=new Set(q.split(' ')), tt=new Set(t.split(' '));
+    const jac=[...qt].filter(x=>tt.has(x)).length/new Set([...qt,...tt]).size;
+    const score=Math.max(1-lev(q,t)/Math.max(q.length,t.length),(t.includes(q)||q.includes(t))?.9:0,jac);
+    return {c,score}}).filter(x=>x.score>=.6).sort((a,b)=>b.score-a.score).slice(0,3).map(x=>x.c);
+}
+/* ---------- local counsel: one list built from every deal sheet ---------- */
+const RATING_LABELS={5:'Excellent',4:'Good',3:'Adequate',2:'Poor',1:'Very poor'};
+const stars=v=>v?'★'.repeat(Math.round(v))+'☆'.repeat(5-Math.round(v)):'';
+function counselDirectory(){
+  const m=new Map();
+  deals.filter(d=>d.status!=='draft').forEach(d=>(d.localCounsel||[]).forEach(l=>{ const f=l.firm?.trim(); if(!f) return;
+    const e=m.get(f)||{firm:f,jurisdictions:new Set(),lawyers:new Set(),uses:[]};
+    if(l.jurisdiction) e.jurisdictions.add(l.jurisdiction.trim());
+    String(l.lawyers||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(x=>e.lawyers.add(x));
+    e.uses.push({deal:d,fees:n(l.fees),recharged:!!l.recharged,rating:n(l.rating)}); m.set(f,e)}));
+  return [...m.values()].map(e=>{const rated=e.uses.filter(u=>u.rating);return {...e,jurisdictions:[...e.jurisdictions],lawyers:[...e.lawyers],
+    fees:sum(e.uses,u=>u.fees),absorbed:sum(e.uses.filter(u=>!u.recharged),u=>u.fees),rating:rated.length?sum(rated,u=>u.rating)/rated.length:0,ratings:rated.length,
+    last:e.uses.map(u=>u.deal.completed||'').sort().pop()}}).sort((a,b)=>b.uses.length-a.uses.length||a.firm.localeCompare(b.firm));
+}
+/* ---------- checks on dates and matter numbers ---------- */
+function dealChecks(o){
+  const errors={}, warnings={};
+  if(o.instructed&&o.signed&&o.signed<o.instructed) errors.signed='Signing date is before the date of instruction.';
+  if(o.signed&&o.completed&&o.completed<o.signed) errors.completed='Completion date is before the signing date.';
+  else if(o.instructed&&o.completed&&o.completed<o.instructed) errors.completed='Completion date is before the date of instruction.';
+  if(o.completed&&o.completed>today()) errors.completed='Completion date is in the future. Deal sheets are for deals that have completed.';
+  const mt=String(o.matter||'').trim().toLowerCase();
+  const dup=mt&&deals.find(x=>x.id!==o.id&&String(x.matter||'').trim().toLowerCase()===mt);
+  if(dup) warnings.matter=`This matter number is already used on “${dup.name||'another deal sheet'}”. Check it's right.`;
+  return {errors,warnings};
+}
+/* ---------- reminders: waiting time in working days ---------- */
+const REMIND_AFTER=3;
+function workingDaysSince(iso){ if(!iso) return 0; const d=new Date(iso.slice(0,10)+'T00:00'), end=new Date(today()+'T00:00'); let k=0; while(d<end){ d.setDate(d.getDate()+1); const w=d.getDay(); if(w&&w<6) k++ } return k }
+const waitingSince=d=>d.status==='in_review'?d.submittedAt:d.status==='returned'?(([...(d.history||[])].reverse().find(h=>h.action==='returned')||{}).at||d.updatedAt):null;
+const lastNudge=d=>(d.nudges||[]).slice(-1)[0];
+/* ---------- activity log (practice manager) ---------- */
+const AKEY='cr.audit.v1';
+let AUDIT=store.get(AKEY,null)||[
+  {at:'2026-01-02T09:12:00Z',by:'larriena',type:'cost',text:'Set 2026 costs to the firm for 6 fee earners, effective 1 Jan 2026'},
+  {at:'2025-01-03T10:05:00Z',by:'larriena',type:'cost',text:'Set 2025 costs to the firm for 6 fee earners, effective 1 Jan 2025'},
+];
+function audit(type,text){ AUDIT.unshift({at:new Date().toISOString(),by:me()?.id,type,text}); store.set(AKEY,AUDIT.slice(0,1000)) }
+// Estimated margin is shown only to the managing partner, practice manager (All access) and finance.
+const seesMargin=()=>['all','finance'].includes(me()?.access);
+const canCorrect=()=>{const u=me(); return !!u&&(u.access==='finance'||!!u.origination)};
+
+/* ---------- derived figures ---------- */
+function calc(d){
+  const team=d.team||[];
+  const hours=team.reduce((a,m)=>a+n(m.hours),0);
+  const suggestedWip=team.reduce((a,m)=>a+n(m.hours)*n(m.rate),0);
+  const wip=n(d.fee?.wip)||suggestedWip;
+  const bill=n(d.fee?.bill);
+  const quote=n(d.fee?.quote);
+  const writeOff=Math.max(0,wip-bill);
+  const realisation=wip?bill/wip:NaN;
+  const teamCost=team.reduce((a,m)=>a+n(m.hours)*memberCost(m,d),0);
+  const lcCost=(d.localCounsel||[]).filter(l=>!l.recharged).reduce((a,l)=>a+n(l.fees),0);
+  const margin=bill-teamCost-lcCost;
+  const marginPct=bill?margin/bill:NaN;
+  const days=(d.completed&&d.instructed)?Math.round((new Date(d.completed)-new Date(d.instructed))/864e5):null;
+  return {hours,suggestedWip,quote,wip,bill,writeOff,realisation,teamCost,lcCost,margin,marginPct,days};
+}
+const year=d=>d.completed?d.completed.slice(0,4):'';
+
+/* ---------- routing and access ---------- */
+function route(){
+  const user=me(), app=$('#app');
+  if(user&&user.status==='left'){ store.del(SKEY); toast('This account has been disabled'); }
+  if(!me()){ document.body.classList.remove('with-nav'); ['#sidebar','#mobilebar','#fab','#scrim'].forEach(x=>$(x).hidden=true); renderLogin(app); return }
+  const c=cfg();
+  let [view,id]=location.hash.slice(1).split('/');
+  const allowed={home:true, mine:c.prepare, new:c.prepare, edit:c.prepare||c.review, reviews:c.review, register:c.lenses.length>0, deal:c.lenses.length>0, origination:canOriginate(), people:!!me().admin, correct:canCorrect(), insights:['all','finance'].includes(me().access), counsel:c.lenses.length>0, directory:['all','bd'].includes(me().access), activity:!!me().admin};
+  if(!allowed[view]){ history.replaceState(null,'','#home'); [view,id]=['home'] }
+  renderTopbar(me(),view,id);
+  if(view==='home') renderHome(app,me());
+  else if(view==='mine') renderMine(app,me());
+  else if(view==='reviews') renderReviews(app,me());
+  else if(view==='new') renderForm(app,null);
+  else if(view==='edit') renderForm(app,deals.find(d=>d.id===id));
+  else if(view==='deal') renderDeal(app,registerDeals().find(d=>d.id===id));
+  else if(view==='origination') renderOrigination(app);
+  else if(view==='people') renderPeople(app);
+  else if(view==='correct') renderForm(app,registerDeals().find(d=>d.id===id),'correct');
+  else if(view==='insights') renderInsights(app);
+  else if(view==='counsel') renderCounsel(app);
+  else if(view==='directory') renderDirectory(app);
+  else if(view==='activity') renderActivity(app);
+  else renderRegister(app);
+  window.scrollTo({top:0});
+}
+window.addEventListener('hashchange',route);
+
+const ICONS={
+  home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  mine:'<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+  reviews:'<path d="M4 12.5 9 17.5 20 6.5"/>',
+  register:'<path d="M4 5h16M4 12h16M4 19h16"/>',
+  origination:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v10M9.5 9.5c0-1 1.1-1.7 2.5-1.7s2.5.7 2.5 1.8c0 2.7-5 1.6-5 4.3 0 1.1 1.1 1.8 2.5 1.8s2.5-.7 2.5-1.7"/>',
+  insights:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  counsel:'<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-5h6v5M9 12h.01M15 12h.01"/>',
+  directory:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/>',
+  activity:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.6 3.2-5.5 6.5-5.5s6 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.4 3.5 5.2"/>'};
+const icon=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
+// Things waiting for this person, shown on Home and counted in the sidebar
+function todos(user){
+  const c=cfg(), out=[];
+  const overdue=d=>{const w=workingDaysSince(waitingSince(d));return w>=REMIND_AFTER?` <span class="pill pill-loss">Waiting ${w} working days</span>`:''};
+  deals.filter(d=>d.preparedBy===user.id&&d.status==='returned').forEach(d=>out.push({tone:'loss',text:`<strong>${esc(nameOf(d.reviewer))}</strong> returned <strong>${esc(d.name)}</strong> for changes${overdue(d)}`,sub:d.reviewNote?'“'+esc(d.reviewNote)+'”':'',href:'#edit/'+d.id,cta:'Make changes'}));
+  if(c.review) reviewQueue(user).forEach(d=>{const nd=lastNudge(d);out.push({tone:workingDaysSince(d.submittedAt)>=REMIND_AFTER?'loss':'warn',text:`Review <strong>${esc(d.name)}</strong>${overdue(d)}`,sub:`Sent by ${esc(nameOf(d.preparedBy))} on ${dfmt(d.submittedAt)}${nd?` · ${esc(nameOf(nd.by))} sent a reminder on ${dfmt(nd.at)}`:''}`,href:'#edit/'+d.id,cta:'Review'})});
+  deals.filter(d=>d.preparedBy===user.id&&d.status==='draft').forEach(d=>out.push({tone:'neutral',text:`Finish your draft: <strong>${esc(d.name||'Untitled deal')}</strong>`,sub:'Last saved '+dfmt(d.updatedAt),href:'#edit/'+d.id,cta:'Continue'}));
+  if(canOriginate()){const k=deals.filter(needsCredit).length; if(k) out.push({tone:'warn',text:`<strong>${k} deal${k>1?'s':''}</strong> ${k>1?'need':'needs'} an origination credit`,sub:'Approved deal sheets waiting for you to assign origination.',href:'#origination',cta:'Add credits'})}
+  if(user.admin){const k=activeUsers().filter(u=>u.teamRole&&!costEntryOn(u)).length; if(k) out.push({tone:'warn',text:`<strong>${k} fee earner${k>1?'s':''}</strong> ${k>1?'have':'has'} no cost to the firm set`,sub:'Their grade\'s standard cost is being used on deals until you add one.',href:'#people',cta:'Set costs'})}
+  return out;
+}
+function renderTopbar(user,view,id){
+  const c=cfg(), side=$('#sidebar');
+  document.body.classList.add('with-nav'); side.hidden=false; $('#mobilebar').hidden=false;
+  const fab=$('#fab'); fab.hidden=!c.prepare||view==='new'||view==='edit';
+  const returned=deals.filter(d=>d.preparedBy===user.id&&d.status==='returned').length;
+  const waiting=c.review?reviewQueue(user).length:0;
+  const pendingCredit=canOriginate()?deals.filter(needsCredit).length:0;
+  let current=view;
+  if(view==='edit'){ const d=deals.find(x=>x.id===id); current=d&&d.preparedBy===user.id?'mine':'reviews' }
+  if(view==='deal'||view==='correct') current='register';
+  const link=(k,label,count)=>`<a class="side-link" href="#${k}" ${current===k?'aria-current="page"':''}>${icon(k)}<span>${label}</span>${count?`<span class="count" aria-label="${count} need attention">${count}</span>`:''}</a>`;
+  const groups=[
+    ['My work',[link('home','Home',todos(user).length),c.prepare?link('mine','My deal sheets',returned):'',c.review?link('reviews','Reviews',waiting):''].join('')],
+    ['Firm data',[c.lenses.length?link('register','Deal register'):'',['all','finance'].includes(user.access)?link('insights','Insights'):'',c.lenses.length?link('counsel','Local counsel'):'',['all','bd'].includes(user.access)?link('directory','Directory submissions'):''].join('')],
+    ['Admin',[canOriginate()?link('origination','Origination credits',pendingCredit):'',user.admin?link('people','People and access'):'',user.admin?link('activity','Activity log'):''].join('')],
+  ].filter(g=>g[1]);
+  side.innerHTML=`<a href="#home" class="side-brand"><span class="brand-mark" aria-hidden="true"></span><span><b>OA</b><small>Data Management System</small></span></a>
+    ${c.prepare?'<a class="btn btn-primary side-new" href="#new">+ New deal sheet</a>':''}
+    <nav class="side-scroll" aria-label="Main">${groups.map(([t,h])=>`<div class="side-label">${t}</div>${h}`).join('')}</nav>
+    <div class="side-foot"><span class="avatar" aria-hidden="true">${initials(user.name)}</span><div style="min-width:0;line-height:1.3;flex:1"><div class="font-semibold text-[14px]" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(user.name)}</div><div class="hint" style="font-size:12px">${esc(c.label)}</div></div>
+      <button class="btn btn-quiet" id="signOut" style="padding:6px 8px">Sign out</button></div>`;
+  $('#mobilebar').innerHTML=`<button class="btn btn-ghost" id="menuBtn" aria-controls="sidebar" aria-expanded="false" style="padding:7px 12px">Menu</button><span class="brand" style="font-size:17px"><span class="brand-mark" aria-hidden="true"></span>OA Data Management System</span>`;
+  const close=()=>{side.classList.remove('open');$('#scrim').hidden=true;$('#menuBtn').setAttribute('aria-expanded','false')};
+  $('#menuBtn').onclick=()=>{side.classList.add('open');$('#scrim').hidden=false;$('#menuBtn').setAttribute('aria-expanded','true');$('.side-link',side)?.focus()};
+  $('#scrim').onclick=close; $$('a',side).forEach(a=>a.addEventListener('click',close));
+  $('#signOut').onclick=()=>{close();store.del(SKEY);history.replaceState(null,'',location.pathname);route()};
+}
+
+/* ================= SIGN IN ================= */
+function renderLogin(app){
+  const groups=[['Management','all'],['Partners and counsel','partner'],['Associates','associate'],['Finance and business development',['finance','bd']]];
+  app.innerHTML=`<div class="fade-in grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)] gap-10 lg:gap-16 items-start max-w-[1080px] mx-auto pt-4 md:pt-10">
+    <div class="lg:pt-10">
+      <a class="brand mb-10" style="font-size:22px"><span class="brand-mark" aria-hidden="true"></span>OA Data Management System</a>
+      <h1 class="text-[40px] md:text-[56px] mb-5 mt-10">Every completed deal, recorded once.</h1>
+      <p class="text-[17px] max-w-[46ch]" style="color:var(--ink-2)">The deal team records each deal when it completes. A partner checks it. Management, finance and business development then each see the part they need.</p>
+      <div class="tomb-wrap max-w-[340px] mt-12 hidden lg:block">${tombstone({client:{name:'Harbour Capital Partners'},name:'Acquisition of Coastline Logistics',value:'240000000',valueCcy:'USD',actingFor:'the purchaser',completed:'2025-06-30',practice:'Corporate M&A'})}</div>
+    </div>
+    <div class="card-raised p-6 md:p-8">
+      <h2 class="text-[28px] mb-1">Sign in</h2>
+      <p class="hint mb-6">Use your firm email address.</p>
+      <form id="loginForm" class="flex flex-col gap-4" novalidate>
+        <label class="field"><span>Email</span><input class="input" name="email" type="email" autocomplete="username" required></label>
+        <label class="field"><span>Password</span><input class="input" name="password" type="password" autocomplete="current-password" required></label>
+        <p class="err" id="loginErr" role="alert"></p>
+        <button class="btn btn-primary justify-center" type="submit">Sign in</button>
+      </form>
+      <div class="mt-8 pt-6" style="border-top:1px solid var(--line-2)">
+        <p class="eyebrow mb-1">Demo accounts</p>
+        <p class="hint mb-4">This is a prototype. Pick an account to sign in as that person; the password for all of them is <span class="mono">demo</span>.</p>
+        ${groups.map(([title,roles])=>`<p class="text-[13px] font-semibold mt-4 mb-2" style="color:var(--ink-2)">${title}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${activeUsers().filter(u=>[].concat(roles).includes(u.access)).map(u=>`<button type="button" class="acct" data-email="${u.email}">
+            <span class="avatar" aria-hidden="true">${initials(u.name)}</span><span style="line-height:1.3"><span class="block font-semibold text-[14px]">${esc(u.name)}</span><span class="hint" style="font-size:12px">${esc(u.title)}</span></span></button>`).join('')}</div>`).join('')}
+      </div>
+    </div></div>`;
+  const f=$('#loginForm');
+  const signIn=(email,pw)=>{
+    const u=USERS.find(x=>x.email.toLowerCase()===email.trim().toLowerCase());
+    if(!u||pw!=='demo'){ $('#loginErr').textContent="That email and password don't match an account. Demo accounts use the password demo."; return }
+    if(u.status==='left'){ $('#loginErr').textContent="This account has been disabled. Ask the practice manager if you think this is wrong."; return }
+    store.set(SKEY,u.id); history.replaceState(null,'','#home'); route(); toast('Signed in as '+u.name);
+  };
+  f.onsubmit=e=>{e.preventDefault();signIn(f.email.value,f.password.value)};
+  $$('.acct').forEach(b=>b.onclick=()=>signIn(b.dataset.email,'demo'));
+}
+
+/* ================= HOME / MY DEAL SHEETS / REVIEWS ================= */
+function statusPill(d){
+  return {draft:'<span class="pill pill-neutral">Draft</span>',
+    in_review:`<span class="pill pill-warn">With ${esc(nameOf(d.reviewer))}</span>`,
+    returned:'<span class="pill pill-loss">Returned for changes</span>',
+    approved:'<span class="pill pill-gain">In the register</span>'}[d.status];
+}
+const sheetTable=(rows,cols,href=d=>'#edit/'+d.id)=>`<div class="card-raised overflow-hidden"><div class="overflow-x-auto"><table class="data"><thead><tr>${cols.map(c=>`<th class="${c[2]||''}">${c[0]}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(d=>`<tr class="link" tabindex="0" data-href="${href(d)}">${cols.map(c=>`<td class="${c[2]||''}">${c[1](d)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+const dealCell=d=>`<div class="font-semibold" style="line-height:1.4">${esc(d.name||'Untitled deal')}</div><div class="hint">${esc(d.client?.name||'No client yet')}${d.matter?' · <span class="mono">'+esc(d.matter)+'</span>':''}</div>`;
+const wireRows=()=>{
+  $$('tr.link[data-href]').forEach(tr=>{const go=()=>location.hash=tr.dataset.href;tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter'&&e.target===tr)go()}});
+  $$('[data-nudge]').forEach(b=>b.onclick=e=>{e.stopPropagation();const d=deals.find(x=>x.id===b.dataset.nudge), now=new Date().toISOString();
+    (d.nudges??=[]).push({at:now,by:me().id}); (d.history??=[]).push({at:now,by:me().id,action:'nudged',to:d.reviewer}); save();
+    toast(`Reminder sent to ${nameOf(d.reviewer)} by email and Teams`); route()});
+};
+const byStatus=(a,b)=>({returned:0,draft:1,in_review:2,approved:3}[a.status]-{returned:0,draft:1,in_review:2,approved:3}[b.status])||(b.updatedAt||'').localeCompare(a.updatedAt||'');
+
+function renderHome(app,user){
+  const c=cfg(), items=todos(user);
+  const h=new Date().getHours(), hello=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  const mine=deals.filter(d=>d.preparedBy===user.id).sort(byStatus).slice(0,5);
+  const cutoff=new Date(Date.now()-30*864e5).toISOString();
+  const recent=c.lenses.length?registerDeals().filter(d=>(d.approvedAt||'')>=cutoff).sort((a,b)=>(b.approvedAt||'').localeCompare(a.approvedAt||'')).slice(0,5):[];
+  app.innerHTML=`<div class="fade-in">
+    <p class="eyebrow mb-2">${esc(c.label)}</p>
+    <h1 class="text-[34px] md:text-[44px] mb-8">${hello}, ${esc(user.name.split(' ')[0])}</h1>
+    <section class="mb-10">
+      <h2 class="text-[24px] mb-4">${items.length?'Needs your attention':'You\'re all caught up'}</h2>
+      ${items.length?`<div class="card-raised overflow-hidden">${items.map(t=>`<a class="todo" href="${t.href}"><span class="dot ${t.tone}" aria-hidden="true"></span>
+        <span style="flex:1;min-width:0"><span class="block" style="line-height:1.45">${t.text}</span>${t.sub?`<span class="hint block mt-0.5">${t.sub}</span>`:''}</span>
+        <span class="btn btn-ghost" style="padding:6px 12px">${t.cta}</span></a>`).join('')}</div>`
+        :c.prepare?`<div class="card p-6"><p class="hint" style="font-size:15px">Nothing is waiting for you. When a deal completes, start a deal sheet${c.review?', and deal sheets sent to you for review will appear here':''}.</p><a class="btn btn-primary mt-4" href="#new">+ New deal sheet</a></div>`
+        :`<div class="card p-6"><p class="hint" style="font-size:15px">Nothing is waiting for you. Deals appear in the register once a partner approves their deal sheet.</p><a class="btn btn-primary mt-4" href="#register">Open the deal register</a></div>`}
+    </section>
+    <div class="grid grid-cols-1 ${recent.length&&mine.length?'xl:grid-cols-2':''} gap-8">
+      ${mine.length?`<section><div class="flex items-baseline justify-between mb-4"><h2 class="text-[24px]">Your deal sheets</h2><a class="btn btn-quiet" href="#mine">See all</a></div>
+        ${sheetTable(mine,[['Deal',dealCell],['Status',statusPill]])}</section>`:''}
+      ${recent.length?`<section><div class="flex items-baseline justify-between mb-4"><h2 class="text-[24px]">New in the register</h2><a class="btn btn-quiet" href="#register">Open register</a></div>
+        ${sheetTable(recent,[['Deal',dealCell],['Approved',d=>`<span class="num whitespace-nowrap">${dfmt(d.approvedAt)}</span>`]],d=>'#deal/'+d.id)}</section>`:''}
+    </div>
+  </div>`;
+  wireRows();
+}
+function renderMine(app,user){
+  const mine=deals.filter(d=>d.preparedBy===user.id).sort(byStatus);
+  app.innerHTML=`<div class="fade-in">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <div><p class="eyebrow mb-2">My work</p><h1 class="text-[34px] md:text-[44px]">My deal sheets</h1>
+      <p class="hint mt-2" style="font-size:15px">Drafts stay with you until you send them for review. Returned deal sheets show your reviewer's note when you open them.</p></div>
+      <a class="btn btn-primary" href="#new">+ New deal sheet</a>
+    </div>
+    ${mine.length?sheetTable(mine,[['Deal',dealCell],['Status',d=>statusPill(d)+(d.status==='in_review'?`<div class="hint mt-1">Waiting ${workingDaysSince(d.submittedAt)} working day${workingDaysSince(d.submittedAt)===1?'':'s'}</div>`:'')],['Completion date',d=>`<span class="num">${dfmt(d.completed)}</span>`],['Last updated',d=>`<span class="num">${dfmt(d.updatedAt)}</span>`],
+      ['',d=>d.status!=='in_review'?'':(lastNudge(d)&&lastNudge(d).at.slice(0,10)===today()?'<span class="hint">Reminder sent today</span>':`<button class="btn btn-ghost" style="padding:5px 12px" data-nudge="${d.id}">Send reminder</button>`),'r']])
+      :`<div class="card p-8 text-center"><p class="serif text-[22px] mb-2">You haven't started a deal sheet yet</p><p class="hint mb-4">When one of your deals completes, start its deal sheet here.</p><a class="btn btn-primary" href="#new">+ New deal sheet</a></div>`}
+  </div>`;
+  wireRows();
+}
+function renderReviews(app,user){
+  const queue=reviewQueue(user);
+  const approvedByMe=deals.filter(d=>d.status==='approved'&&d.approvedBy===user.id).sort((a,b)=>(b.approvedAt||'').localeCompare(a.approvedAt||'')).slice(0,8);
+  app.innerHTML=`<div class="fade-in">
+    <div class="mb-8"><p class="eyebrow mb-2">My work</p><h1 class="text-[34px] md:text-[44px]">Reviews</h1>
+      <p class="hint mt-2" style="font-size:15px">Check each deal sheet, then approve it into the register or return it with a note. Deal sheets waiting more than ${REMIND_AFTER} working days are flagged, and the live system sends you an email and Teams reminder.</p></div>
+    <section class="mb-10"><h2 class="text-[24px] mb-4">Waiting for your review</h2>
+      ${queue.length?sheetTable(queue,[['Deal',dealCell],['Prepared by',d=>esc(nameOf(d.preparedBy))],['Sent',d=>`<span class="num">${dfmt(d.submittedAt)}</span><div class="mt-1">${workingDaysSince(d.submittedAt)>=REMIND_AFTER?`<span class="pill pill-loss">Waiting ${workingDaysSince(d.submittedAt)} working days</span>`:`<span class="hint">${workingDaysSince(d.submittedAt)} working days</span>`}</div>`],['Completion date',d=>`<span class="num">${dfmt(d.completed)}</span>`],['',()=>'<span class="btn btn-ghost" style="padding:5px 12px">Review</span>','r']])
+        :`<div class="card p-6"><p class="serif text-[19px]">Nothing is waiting for your review.</p><p class="hint">Deal sheets sent to you appear here and on your Home page.</p></div>`}
+    </section>
+    ${approvedByMe.length?`<section><h2 class="text-[24px] mb-4">Recently approved by you</h2>
+      ${sheetTable(approvedByMe,[['Deal',dealCell],['Prepared by',d=>esc(nameOf(d.preparedBy))],['Approved',d=>`<span class="num">${dfmt(d.approvedAt)}</span>`]])}</section>`:''}
+  </div>`;
+  wireRows();
+}
+
+/* ================= FORM ================= */
+function renderForm(app,deal,want){
+  const user=me(), c=cfg();
+  let mode='edit';
+  if(deal&&want==='correct'){
+    if(deal.status==='approved'&&canCorrect()) mode='correct'; else { location.hash='#home'; return }
+  } else if(deal){
+    if(deal.status==='in_review'&&deal.reviewer===user.id) mode='review';
+    else if((deal.status==='draft'||deal.status==='returned')&&deal.preparedBy===user.id) mode='edit';
+    else if(deal.preparedBy===user.id||deal.reviewer===user.id||deal.approvedBy===user.id) mode='view';
+    else { location.hash=c.home; return }
+  } else if(!c.prepare){ location.hash=c.home; return }
+  const ro=mode==='view';
+  const d=deal||{id:uid(),status:'draft',preparedBy:user.id,client:{},fee:{arrangement:'Hourly',writeoffReasons:[]},team:user.teamRole?[{name:user.name,role:user.teamRole,rate:rateOf(user)},{role:user.teamRole==='Associate'?'Partner':'Associate',rate:user.teamRole==='Associate'?650:300}]:[{role:'Partner',rate:650},{role:'Associate',rate:300}],contacts:[{}],localCounsel:[],referable:'public',completed:today(),history:[]};
+  const opt=(arr,v)=>arr.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
+  const banner={
+    returned:`<div class="banner loss mb-6"><div><strong>${esc(nameOf(d.reviewer))} returned this deal sheet.</strong> ${d.reviewNote?'“'+esc(d.reviewNote)+'”':''}<div class="hint mt-1">Make the changes, then send it back for review.</div></div></div>`,
+    in_review: mode==='review'
+      ?`<div class="banner warn mb-6"><div><strong>${esc(nameOf(d.preparedBy))} sent this for your review</strong> on ${dfmt(d.submittedAt)}. Check the details and correct anything small yourself. Approve it to add it to the register, or return it with a note.</div></div>`
+      :`<div class="banner warn mb-6"><div><strong>With ${esc(nameOf(d.reviewer))} for review</strong> since ${dfmt(d.submittedAt)}. You'll see it here again if they return it.</div></div>`,
+    approved: mode==='correct'
+      ?`<div class="banner warn mb-6"><div><strong>You're correcting an approved deal.</strong> Changes go straight into the register. Say what you changed and why at the end; the correction is recorded on the deal and in the activity log.</div></div>`
+      :`<div class="banner gain mb-6"><div><strong>Approved by ${esc(nameOf(d.approvedBy))}</strong> on ${dfmt(d.approvedAt)}. This deal is in the register. Ask finance if something needs correcting.</div></div>`,
+  }[deal?d.status:''] || '';
+  const title=!deal?'New deal sheet':esc(d.name||'Untitled deal');
+  const eyebrow=!deal?'Deal sheet':mode==='correct'?'Correction':mode==='review'?'Review':d.status==='draft'?'Draft deal sheet':'Deal sheet';
+
+  app.innerHTML=`
+  <div class="fade-in">
+    <div class="mb-6">
+      <p class="eyebrow mb-2">${eyebrow}${d.matter?' · '+esc(d.matter):''}</p>
+      <h1 class="text-[34px] md:text-[44px]">${title}</h1>
+      ${!deal?`<p class="hint mt-2 max-w-[62ch]" style="font-size:15px">Fill this in once the deal completes. Your draft saves automatically as you go. When it's ready, tick the box at the end to send it to a reviewing partner.</p>`:''}
+      ${mode==='edit'?`<div class="mt-4 max-w-[420px] lg:hidden"><div class="flex justify-between text-[13px] mb-1"><span class="font-semibold" data-progress-text></span></div><div class="meter"><i data-progress-bar style="width:0%;background:var(--gain)"></i></div></div>`:''}
+    </div>
+    ${banner}
+    <div class="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)_360px] gap-8 items-start">
+      <nav class="jumps hidden lg:block sticky top-24" aria-label="Form sections">
+        ${mode==='edit'||mode==='correct'?`<div class="mb-4 pr-2"><p class="text-[13px] font-semibold mb-1" data-progress-text></p><div class="meter"><i data-progress-bar style="width:0%;background:var(--gain)"></i></div></div>`:''}
+        <a href="#s-deal" data-jump data-sec="s-deal">The deal</a><a href="#s-client" data-jump data-sec="s-client">Client</a><a href="#s-team" data-jump data-sec="s-team">Deal team</a>
+        <a href="#s-lc" data-jump data-sec="s-lc">Local counsel <span class="hint">(if used)</span></a><a href="#s-fees" data-jump data-sec="s-fees">Time, billing and write-offs</a><a href="#s-bd" data-jump data-sec="s-bd">For directory submissions</a>
+      </nav>
+      <form id="dealForm" class="card-raised" novalidate>
+        <section class="section" id="s-deal">
+          <div class="section-head"><h2>The deal</h2></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="field md:col-span-2"><span>Deal name<em>*</em></span><input class="input" name="name" required value="${esc(d.name)}" placeholder="e.g. Acquisition of Coastline Logistics by Harbour Capital"></label>
+            <label class="field"><span>Matter number</span><input class="input mono" name="matter" value="${esc(d.matter)}" placeholder="e.g. HC-0421"><span class="hint" style="color:var(--warn)" data-msg="matter"></span></label>
+            <label class="field"><span>Practice area</span><select class="input" name="practice">${opt(PRACTICES,d.practice)}</select></label>
+            <label class="field"><span>Deal type</span><select class="input" name="type">${opt(DEAL_TYPES,d.type)}</select></label>
+            <label class="field"><span>Client</span><input class="input" name="actingFor" value="${esc(d.actingFor)}" placeholder="e.g. the purchaser, the arrangers"></label>
+            <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <label class="field"><span>Date of instruction</span><input type="date" class="input" name="instructed" value="${esc(d.instructed)}"></label>
+              <label class="field"><span>Signing date</span><input type="date" class="input" name="signed" value="${esc(d.signed)}" max="${today()}"><span class="err" data-msg="signed"></span></label>
+              <label class="field"><span>Completion date<em>*</em></span><input type="date" class="input" name="completed" required value="${esc(d.completed)}" max="${today()}"><span class="err" data-msg="completed"></span></label>
+            </div>
+            <div class="grid grid-cols-[1fr_110px] gap-3">
+              <label class="field"><span>Deal value</span><input class="input num" name="value" inputmode="decimal" value="${esc(d.value)}" placeholder="0"></label>
+              <label class="field"><span>Currency</span><select class="input" name="valueCcy">${opt(['USD','GBP','EUR','NGN','ZAR','KES','GHS'],d.valueCcy||'USD')}</select></label>
+            </div>
+            <label class="field"><span>Jurisdictions involved</span><input class="input" name="jurisdictions" value="${esc(d.jurisdictions)}" placeholder="e.g. Nigeria, Ghana, England"></label>
+            <label class="field md:col-span-2"><span>Counterparties</span><input class="input" name="counterparties" value="${esc(d.counterparties)}" placeholder="The other side(s) of the deal"></label>
+            <label class="field md:col-span-2"><span>Counsel to other parties</span><input class="input" name="opposingCounsel" value="${esc(d.opposingCounsel)}" placeholder="Firms advising the other side"></label>
+            <label class="field md:col-span-2"><span>Deal description</span><textarea class="input" name="description" placeholder="What happened, in two or three sentences.">${esc(d.description)}</textarea></label>
+          </div>
+        </section>
+
+        <section class="section" id="s-client">
+          <div class="section-head"><h2>Client</h2></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="field"><label for="clientName"><span class="text-[13px] font-semibold" style="color:var(--ink-2)">Client name<em style="font-style:normal;color:var(--tape);margin-left:2px">*</em></span></label>
+              <div class="relative"><input class="input" id="clientName" name="client.name" required value="${esc(d.client.name)}" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="clientSuggest" placeholder="Start typing to find an existing client">
+                <div class="suggest" id="clientSuggest" role="listbox" hidden></div></div>
+              <div class="hint" id="clientNote" aria-live="polite"></div></div>
+            <label class="field"><span>Sector</span><input class="input" name="client.sector" value="${esc(d.client.sector)}" placeholder="e.g. Financial services" list="sectorList"></label>
+            <label class="field"><span>Client headquarters</span><input class="input" name="client.country" value="${esc(d.client.country)}"></label>
+            <label class="field"><span>Client relationship</span><select class="input" name="client.status">${opt(['Existing client','New client','Returning client'],d.client.status)}</select></label>
+            <label class="field"><span>How the work came in</span><select class="input" name="client.origination">${opt(['Existing relationship','Referral from another firm','Referral from a client','Pitch or tender','Direct approach','Directory or website'],d.client.origination)}</select></label>
+            <label class="field"><span>Relationship partner</span><input class="input" name="client.relationshipPartner" value="${esc(d.client.relationshipPartner)}"></label>
+          </div>
+          <div class="flex items-baseline justify-between mb-3"><h3 class="text-[18px]">Key client contacts</h3><button type="button" class="btn btn-quiet" data-add="contacts">+ Add contact</button></div>
+          <div class="rows" data-group="contacts"></div>
+          <datalist id="lcFirms">${counselDirectory().map(f=>`<option value="${esc(f.firm)}">${esc(f.jurisdictions.join(', '))}</option>`).join('')}</datalist>
+          <datalist id="sectorList">${[...new Set(deals.map(x=>x.client?.sector).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+        </section>
+
+        <section class="section" id="s-team">
+          <div class="section-head"><h2>Deal team</h2><button type="button" class="btn btn-quiet" data-add="team">+ Add team member</button></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <label class="field"><span>Originating partner/associate<em>*</em></span><select class="input" name="originator" required><option value="">Choose who brought in the deal</option>${feeEarners().map(u=>`<option value="${esc(u.name)}" ${d.originator===u.name?'selected':''}>${esc(u.name)} · ${esc(u.title)}</option>`).join('')}${d.originator&&!feeEarners().some(u=>u.name===d.originator)?`<option selected>${esc(d.originator)}</option>`:''}</select><span class="hint">Gets the origination credit. Can be the same person as the lead partner.</span></label>
+            <label class="field"><span>Lead partner<em>*</em></span><select class="input" name="leadPartner" required><option value="">Choose the partner running the deal</option>${leadPartners().map(u=>`<option value="${esc(u.name)}" ${d.leadPartner===u.name?'selected':''}>${esc(u.name)} · ${esc(u.title)}</option>`).join('')}${d.leadPartner&&!leadPartners().some(u=>u.name===d.leadPartner)?`<option selected>${esc(d.leadPartner)}</option>`:''}</select><span class="hint">Runs the deal.</span></label>
+          </div>
+          <div class="rows" data-group="team"></div>
+          <p class="hint">Hours and rates are used to suggest the WIP figure below. Rates fill in from the role; change them if this deal used different rates.</p>
+        </section>
+
+        <section class="section" id="s-lc">
+          <div class="section-head"><h2>Local counsel</h2><button type="button" class="btn btn-quiet" data-add="localCounsel">+ Add local counsel</button></div>
+          <div class="rows" data-group="localCounsel"></div>
+          <p class="hint" data-lc-empty>No local counsel on this deal. Add a firm if you instructed one.</p>
+        </section>
+
+        <section class="section" id="s-fees">
+          <div class="section-head"><h2>Time, billing and write-offs</h2></div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="field"><span>Fee arrangement</span><select class="input" name="fee.arrangement">${opt(FEE_ARRANGEMENTS,d.fee.arrangement)}</select></label>
+            <label class="field"><span>Fee quoted to client</span><input class="input num" name="fee.quote" inputmode="decimal" value="${esc(d.fee.quote)}" placeholder="0"></label>
+            <label class="field"><span>Total WIP (time recorded, at rates)</span><input class="input num" name="fee.wip" inputmode="decimal" value="${esc(d.fee.wip)}" placeholder="0"><span class="hint" data-wip-hint></span></label>
+            <label class="field"><span>Final bill to client (fees)<em>*</em></span><input class="input num" name="fee.bill" inputmode="decimal" required value="${esc(d.fee.bill)}" placeholder="0"></label>
+            <label class="field"><span>Disbursements billed</span><input class="input num" name="fee.disbursements" inputmode="decimal" value="${esc(d.fee.disbursements)}" placeholder="0"></label>
+            <label class="field"><span>Invoice date</span><input type="date" class="input" name="fee.invoiceDate" value="${esc(d.fee.invoiceDate)}"></label>
+            <label class="field"><span>Payment status</span><select class="input" name="fee.paid">${opt(['Not yet invoiced','Invoiced, unpaid','Part paid','Paid in full'],d.fee.paid)}</select></label>
+            <label class="field"><span>Write-off approved by</span><input class="input" name="fee.approvedBy" value="${esc(d.fee.approvedBy)}"></label>
+          </div>
+          <div class="mt-6" data-writeoff>
+            <p class="field mb-3"><span>Why was WIP written off?</span></p>
+            <div class="flex flex-wrap gap-2">${WRITEOFF_REASONS.map(r=>`<label class="chip-check"><input type="checkbox" name="fee.writeoffReasons" value="${esc(r)}" ${(d.fee.writeoffReasons||[]).includes(r)?'checked':''}>${esc(r)}</label>`).join('')}</div>
+            <label class="field mt-4"><span>Write-off explanation</span><textarea class="input" name="fee.writeoffNote" placeholder="What happened, and what we would do differently.">${esc(d.fee.writeoffNote)}</textarea></label>
+          </div>
+        </section>
+
+        <section class="section" id="s-bd">
+          <div class="section-head"><h2>For directory submissions</h2></div>
+          <div class="grid grid-cols-1 gap-4">
+            <fieldset class="field"><span>Can we name this deal?</span>
+              <div class="flex flex-wrap gap-2 mt-1">${Object.entries(REFERABLE).map(([k,v])=>`<label class="chip-check"><input type="radio" name="referable" value="${k}" ${d.referable===k?'checked':''}>${v}</label>`).join('')}</div>
+            </fieldset>
+            <label class="field"><span>Why this deal matters</span><textarea class="input" name="significance" placeholder="Firsts, size, market impact. What makes it stand out in the market.">${esc(d.significance)}</textarea></label>
+            <label class="field"><span>Notable or unique aspects</span><textarea class="input" name="notable" placeholder="Interesting structuring, novel legal points, regulatory hurdles cleared, tight timetables, anything unusual about how the deal was done.">${esc(d.notable)}</textarea><span class="hint">Directory researchers look for this. Include detail even if the deal is confidential; BD will anonymise it.</span></label>
+          </div>
+        </section>
+
+        <div class="p-6 border-t flex flex-col gap-4" style="border-color:var(--line-2);background:var(--surface);border-radius:0 0 10px 10px" id="formFoot"></div>
+      </form>
+      <aside class="lg:sticky lg:top-24 flex flex-col gap-5">
+        <div><p class="eyebrow mb-3">Your tombstone</p><div class="tomb-wrap" id="preview"></div></div>
+        <div class="card p-5" id="liveFigures"></div>
+        ${(d.history||[]).length?`<div class="card p-5"><p class="eyebrow mb-4">Activity</p><ol class="timeline">${[...d.history].reverse().map(h=>`<li class="${h.action}"><strong>${esc(nameOf(h.by))}</strong> ${{created:'started the form',submitted:'sent it to '+esc(nameOf(h.to))+' for review',returned:'returned it for changes',approved:'approved it into the register',saved:'saved changes',corrected:'corrected it after approval',nudged:'sent a reminder'}[h.action]||esc(h.action)}<div class="hint">${dfmt(h.at)}${h.note?' · “'+esc(h.note)+'”':''}</div></li>`).join('')}</ol></div>`:''}
+      </aside>
+    </div>
+  </div>`;
+
+  const form=$('#dealForm'), foot=$('#formFoot');
+  const reviewerOpts=reviewers().filter(u=>u.id!==user.id);
+  const defaultReviewer=d.reviewer||reviewerOpts.find(u=>u.name===d.leadPartner)?.id||'';
+  if(mode==='edit'){
+    foot.innerHTML=`
+      <label class="sendbox"><input type="checkbox" id="sendReview" ${d.status==='returned'?'checked':''}>
+        <span><span class="font-semibold block">This deal sheet is complete and ready to be checked</span><span class="hint">Tick to send it to a reviewing partner. They'll approve it into the register or send it back with a note.</span></span></label>
+      <label class="field max-w-md" id="reviewerField"><span>Reviewing partner<em>*</em></span>
+        <select class="input" id="reviewer"><option value="">Choose a reviewer</option>${reviewerOpts.map(u=>`<option value="${u.id}" ${u.id===defaultReviewer?'selected':''}>${esc(u.name)} · ${esc(u.title)}</option>`).join('')}</select></label>
+      <div class="flex flex-wrap items-center gap-3"><p class="err" id="formErr" role="alert"></p>
+        <span class="hint ml-auto" id="saveState" aria-live="polite"></span>
+        <div class="flex gap-2"><a class="btn btn-ghost" href="#mine">Close</a><button class="btn btn-primary" type="submit" id="mainBtn"></button></div></div>`;
+    const sync=()=>{const on=$('#sendReview').checked;$('#reviewerField').hidden=!on;$('#mainBtn').textContent=on?'Send for review':'Save draft'};
+    $('#sendReview').onchange=sync; sync();
+  } else if(mode==='review'){
+    foot.innerHTML=`
+      <label class="field"><span>Note to ${esc(firstName(d.preparedBy))}</span><textarea class="input" id="reviewNote" placeholder="Needed if you return the form: say what to change."></textarea></label>
+      <div class="flex flex-wrap items-center gap-3"><p class="err" id="formErr" role="alert"></p>
+        <div class="flex flex-wrap gap-2 ml-auto"><button type="button" class="btn btn-ghost" id="returnBtn">Return to ${esc(firstName(d.preparedBy))}</button><button type="button" class="btn btn-primary" id="approveBtn">Approve and add to register</button></div></div>`;
+  } else if(mode==='correct'){
+    foot.innerHTML=`
+      <label class="field"><span>What did you change, and why?<em>*</em></span><textarea class="input" id="correctReason" placeholder="e.g. Final bill corrected to match invoice INV-2291; quoted fee was entered in the wrong currency."></textarea></label>
+      <div class="flex flex-wrap items-center gap-3"><p class="err" id="formErr" role="alert"></p>
+        <div class="flex gap-2 ml-auto"><a class="btn btn-ghost" href="#deal/${d.id}">Cancel</a><button type="button" class="btn btn-primary" id="correctBtn">Save correction</button></div></div>`;
+  } else {
+    foot.innerHTML=`<div class="flex"><a class="btn btn-ghost ml-auto" href="${d.preparedBy===user.id?'#mine':'#reviews'}">Back to ${d.preparedBy===user.id?'my deal sheets':'reviews'}</a></div>`;
+  }
+
+  const rowTpl={
+    contacts:(r={})=>`<div class="row grid-cols-1 sm:grid-cols-2">
+      <label class="field"><span>Name</span><input class="input" data-k="name" value="${esc(r.name)}"></label>
+      <label class="field"><span>Title</span><input class="input" data-k="title" value="${esc(r.title)}"></label>
+      <label class="field"><span>Email</span><input class="input" type="email" data-k="email" value="${esc(r.email)}" autocomplete="off"></label>
+      <label class="field"><span>Phone</span><input class="input" type="tel" data-k="phone" value="${esc(r.phone)}" autocomplete="off"></label>
+      <div class="flex items-center gap-2 sm:col-span-2"><label class="chip-check" title="Willing to act as a directory referee"><input type="checkbox" data-k="referee" ${r.referee?'checked':''}>Willing to be a directory referee</label></div><button type="button" class="btn btn-quiet row-x" data-remove aria-label="Remove contact">✕</button></div>`,
+    team:(r={})=>`<div class="row grid-cols-2">
+      <label class="field"><span>Name</span><select class="input" data-k="name"><option value="">Choose a team member</option>${feeEarners().map(u=>`<option value="${esc(u.name)}" ${r.name===u.name?'selected':''}>${esc(u.name)}</option>`).join('')}${r.name&&!feeEarners().some(u=>u.name===r.name)?`<option selected>${esc(r.name)}</option>`:''}</select></label>
+      <label class="field"><span>Role</span><select class="input" data-k="role">${opt(Object.keys(ROLES),r.role)}</select></label>
+      <label class="field"><span>Hours</span><input class="input num" data-k="hours" inputmode="decimal" value="${esc(r.hours)}"></label>
+      <label class="field"><span>Rate / hr</span><input class="input num" data-k="rate" inputmode="decimal" value="${esc(r.rate??ROLES[r.role||'Partner'].rate)}"></label>
+      <button type="button" class="btn btn-quiet row-x" data-remove aria-label="Remove team member">✕</button></div>`,
+    localCounsel:(r={})=>`<div class="row grid-cols-1 sm:grid-cols-2">
+      <label class="field"><span>Firm</span><input class="input" data-k="firm" value="${esc(r.firm)}" list="lcFirms" placeholder="Pick or type a firm"></label>
+      <label class="field"><span>Jurisdiction</span><input class="input" data-k="jurisdiction" value="${esc(r.jurisdiction)}"></label>
+      <label class="field sm:col-span-2"><span>Lawyers</span><input class="input" data-k="lawyers" value="${esc(r.lawyers)}" placeholder="Names, comma separated"></label>
+      <label class="field"><span>Their fees</span><input class="input num" data-k="fees" inputmode="decimal" value="${esc(r.fees)}"></label>
+      <label class="field"><span>How did they do?</span><select class="input" data-k="rating"><option value="">Not rated</option>${[5,4,3,2,1].map(v=>`<option value="${v}" ${String(r.rating)===String(v)?'selected':''}>${v} · ${RATING_LABELS[v]}</option>`).join('')}</select></label>
+      <div class="flex items-center gap-2 sm:col-span-2"><label class="chip-check" title="Their fees were passed to the client"><input type="checkbox" data-k="recharged" ${r.recharged?'checked':''}>Fees recharged to the client</label></div><button type="button" class="btn btn-quiet row-x" data-remove aria-label="Remove local counsel">✕</button></div>`
+  };
+  for(const g of ['contacts','team','localCounsel']) $(`[data-group="${g}"]`).innerHTML=(d[g]||[]).map(rowTpl[g]).join('');
+  if(ro){
+    $$('input,select,textarea',form).forEach(el=>el.disabled=true);
+    $$('[data-add],[data-remove]',form).forEach(el=>el.remove());
+  }
+
+  form.addEventListener('click',e=>{
+    const add=e.target.closest('[data-add]');
+    if(add){const g=add.dataset.add;$(`[data-group="${g}"]`).insertAdjacentHTML('beforeend',rowTpl[g](g==='team'?{role:'Associate'}:{}));$(`[data-group="${g}"] .row:last-child input`).focus();update()}
+    const rm=e.target.closest('[data-remove]');
+    if(rm){rm.closest('.row').remove();update()}
+  });
+  form.addEventListener('change',e=>{
+    if(e.target.dataset.k==='role'){const rate=e.target.closest('.row').querySelector('[data-k="rate"]');rate.value=ROLES[e.target.value].rate;}
+    if(e.target.dataset.k==='firm'&&e.target.closest('[data-group="localCounsel"]')){
+      const f=counselDirectory().find(x=>x.firm.toLowerCase()===e.target.value.trim().toLowerCase()), row=e.target.closest('.row');
+      if(f){ const j=row.querySelector('[data-k="jurisdiction"]'), l=row.querySelector('[data-k="lawyers"]'); if(!j.value) j.value=f.jurisdictions[0]||''; if(!l.value) l.value=f.lawyers.join(', ') }
+    }
+    if(e.target.dataset.k==='name'&&e.target.closest('[data-group="team"]')){
+      const u=feeEarners().find(x=>x.name===e.target.value), row=e.target.closest('.row');
+      if(u){row.querySelector('[data-k="role"]').value=u.teamRole;row.querySelector('[data-k="rate"]').value=rateOf(u);}
+    }
+    update();
+  });
+  form.addEventListener('input',e=>{if(e.target.value?.trim())e.target.removeAttribute('aria-invalid');update()});
+  $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();$(a.getAttribute('href')).scrollIntoView({behavior:'smooth',block:'start'})}));
+
+  function read(){
+    if(ro) return JSON.parse(JSON.stringify(d));
+    const {client,fee,contacts,team,localCounsel,...meta}=d;
+    const o={...meta,id:d.id||uid(),client:{},fee:{writeoffReasons:[]}};
+    for(const el of form.elements){
+      if(!el.name) continue;
+      if(el.type==='radio'&&!el.checked) continue;
+      const [a,b]=el.name.split('.');
+      if(el.name==='fee.writeoffReasons'){ if(el.checked) o.fee.writeoffReasons.push(el.value); continue }
+      if(b) o[a][b]=el.value.trim(); else o[a]=el.value.trim();
+    }
+    for(const g of ['contacts','team','localCounsel']){
+      o[g]=$$(`[data-group="${g}"] .row`).map(row=>{const r={};$$('[data-k]',row).forEach(i=>r[i.dataset.k]=i.type==='checkbox'?i.checked:i.value.trim());return r})
+        .filter(r=>Object.entries(r).some(([k,v])=>v&&!['role','rate','recharged','referee','rating'].includes(k)));
+    }
+    o.history=[...(d.history||[])];
+    return o;
+  }
+  function update(){
+    const o=read(), k=calc(o);
+    $('#preview').innerHTML=tombstone(o);
+    $('[data-wip-hint]').textContent=k.suggestedWip?`Team time adds up to ${money(k.suggestedWip)}${n(o.fee.wip)?'':' (used if left blank)'}.`:'';
+    $('[data-lc-empty]').hidden=$$('[data-group="localCounsel"] .row').length>0;
+    $('[data-writeoff]').style.opacity=k.writeOff>0||o.fee.writeoffReasons.length?1:.55;
+    $('#liveFigures').innerHTML=`<p class="eyebrow mb-4">Deal financial metrics</p>
+      <dl class="kv kv-fig">
+        <dt>Hours recorded</dt><dd class="num">${hrs(k.hours)}</dd>
+        <dt>WIP</dt><dd class="num">${money(k.wip)}</dd>
+        <dt>Billed</dt><dd class="num">${money(k.bill)}</dd>
+        <dt>Written off</dt><dd class="num ${k.writeOff?'warn':''}">${money(k.writeOff)}</dd>
+        <dt>Realisation</dt><dd class="num">${pct(k.realisation)}</dd>
+        ${!seesMargin()?'':`<dt>Estimated margin</dt><dd class="num ${k.margin<0?'loss':'gain'}">${k.bill?money(k.margin)+' · '+pct(k.marginPct):'–'}</dd>`}
+      </dl>
+      ${k.writeOff>0&&!o.fee.writeoffReasons.length&&!ro?`<p class="hint mt-4" style="color:var(--warn)">${money(k.writeOff)} of WIP isn't billed. Pick a reason under write-offs so finance can see why.</p>`:''}`;
+    if(ro) return;
+    const chk=dealChecks(o);
+    $$('[data-msg]',form).forEach(el=>{const f=el.dataset.msg; el.textContent=chk.errors[f]||chk.warnings[f]||''; const inp=form.elements[f]; if(inp){ if(chk.errors[f]) inp.setAttribute('aria-invalid','true'); else if(inp.dataset.checked) inp.removeAttribute('aria-invalid'); inp.dataset.checked=chk.errors[f]?'1':'' }});
+    const done=sectionsDone(o), req=Object.keys(done).filter(k=>k!=='s-lc'), got=req.filter(k=>done[k]).length;
+    $$('[data-progress-text]').forEach(el=>el.textContent=`${got} of ${req.length} sections complete`);
+    $$('[data-progress-bar]').forEach(el=>el.style.width=(got/req.length*100)+'%');
+    $$('[data-sec]').forEach(a=>{a.classList.toggle('done',!!done[a.dataset.sec]);a.classList.toggle('optional',a.dataset.sec==='s-lc')});
+  }
+  update();
+
+  /* autosave drafts while the preparer types */
+  let created=!!deal, autoTimer;
+  function autosave(){
+    const o=read(); if(!o.name&&!o.client?.name) return;
+    if(!created){ o.history.push({at:new Date().toISOString(),by:user.id,action:'created'}); created=true }
+    o.updatedAt=new Date().toISOString(); d.history=o.history;
+    const i=deals.findIndex(x=>x.id===o.id); if(i>=0) deals[i]=o; else deals.unshift(o);
+    save(); if(location.hash!=='#edit/'+o.id) history.replaceState(null,'','#edit/'+o.id);
+    $('#saveState').textContent=(o.status==='returned'?'Changes':'Draft')+' saved automatically at '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  }
+  if(mode==='edit'){
+    const queue=()=>{clearTimeout(autoTimer);$('#saveState').textContent='Saving…';autoTimer=setTimeout(autosave,1200)};
+    form.addEventListener('input',queue); form.addEventListener('change',queue);
+    if(deal) $('#saveState').textContent='Changes save automatically';
+  }
+
+  /* client name: suggest existing clients, fill their details, flag look-alike names */
+  if(!ro){
+    const inp=$('#clientName'), box=$('#clientSuggest'), note=$('#clientNote');
+    let active=-1;
+    const options=()=>$$('[role="option"]',box);
+    const close=()=>{box.hidden=true;inp.setAttribute('aria-expanded','false');active=-1};
+    const pick=c=>{
+      inp.value=c.name; close();
+      const f=form.elements;
+      if(!f['client.sector'].value) f['client.sector'].value=c.sector||'';
+      if(!f['client.country'].value) f['client.country'].value=c.country||'';
+      if(!f['client.relationshipPartner'].value) f['client.relationshipPartner'].value=c.relationshipPartner||'';
+      f['client.status'].value='Existing client';
+      const rows=$$('[data-group="contacts"] .row');
+      const empty=rows.every(r=>!$$('[data-k="name"],[data-k="email"]',r).some(i=>i.value.trim()));
+      if(empty&&c.contacts?.length){ $('[data-group="contacts"]').innerHTML=c.contacts.map(x=>rowTpl.contacts({...x,referee:false})).join('') }
+      describe(); update(); form.dispatchEvent(new Event('change'));
+      toast(`Filled in ${c.name}'s details from their previous deals`);
+    };
+    const describe=()=>{
+      const v=inp.value.trim(), dir=clientDirectory(), exact=dir.find(c=>c.name.toLowerCase()===v.toLowerCase());
+      if(!v){note.innerHTML='';return}
+      if(exact){note.innerHTML=`Existing client · ${exact.deals} previous deal sheet${exact.deals>1?'s':''}`;return}
+      const sim=similarClients(v);
+      note.innerHTML=sim.length
+        ?`<span style="color:var(--warn);font-weight:600">New client name.</span> Did you mean ${sim.map(c=>`<button type="button" class="btn btn-quiet" style="padding:1px 6px;color:var(--tape-deep);text-decoration:underline" data-use-client="${esc(c.name)}">${esc(c.name)}</button>`).join(' or ')}? Using the existing name keeps their deals together.`
+        :'New client. They\'ll be added to the client list when this deal sheet is saved.';
+      $$('[data-use-client]',note).forEach(b=>b.onclick=()=>pick(dir.find(c=>c.name===b.dataset.useClient)));
+    };
+    const show=()=>{
+      const v=inp.value.trim().toLowerCase(), dir=clientDirectory();
+      const hits=(v?dir.filter(c=>c.name.toLowerCase().includes(v)):dir).slice(0,6);
+      const sims=v?similarClients(inp.value).filter(c=>!hits.some(h=>h.name===c.name)):[];
+      const all=[...hits,...sims];
+      const exact=dir.some(c=>c.name.toLowerCase()===v);
+      box.innerHTML=all.map((c,i)=>`<div role="option" id="cs-${i}" data-name="${esc(c.name)}" aria-selected="false"><span class="font-semibold">${esc(c.name)}</span><span class="hint"> · ${esc(c.sector||'Sector not set')} · ${c.deals} deal${c.deals>1?'s':''}${sims.some(x=>x.name===c.name)?' · similar name':''}</span></div>`).join('')
+        +(v&&!exact?`<div role="option" id="cs-new" data-new="1" aria-selected="false"><span class="font-semibold" style="color:var(--tape-deep)">+ Add “${esc(inp.value.trim())}” as a new client</span></div>`:'');
+      box.hidden=!box.innerHTML; inp.setAttribute('aria-expanded',String(!box.hidden)); active=-1;
+    };
+    const choose=el=>{ if(!el) return; if(el.dataset.new){ close(); form.elements['client.status'].value='New client'; describe(); update() } else pick(clientDirectory().find(c=>c.name===el.dataset.name)) };
+    inp.addEventListener('input',()=>{show();describe()});
+    inp.addEventListener('focus',show);
+    inp.addEventListener('blur',()=>setTimeout(close,150));
+    inp.addEventListener('keydown',e=>{
+      const opts=options(); if(box.hidden||!opts.length) return;
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();active=(active+(e.key==='ArrowDown'?1:-1)+opts.length)%opts.length;opts.forEach((o,i)=>o.setAttribute('aria-selected',i===active));inp.setAttribute('aria-activedescendant',opts[active].id);opts[active].scrollIntoView({block:'nearest'})}
+      else if(e.key==='Enter'&&active>=0){e.preventDefault();choose(opts[active])}
+      else if(e.key==='Escape') close();
+    });
+    box.addEventListener('mousedown',e=>{e.preventDefault();choose(e.target.closest('[role="option"]'))});
+    describe();
+  }
+
+  function validate(){
+    $$('[aria-invalid]',form).forEach(i=>i.removeAttribute('aria-invalid'));
+    const req={name:'deal name','client.name':'client name',completed:'completion date',originator:'originating partner/associate',leadPartner:'lead partner','fee.bill':'final bill'};
+    const missing=[];
+    for(const [k,label] of Object.entries(req)){const el=form.elements[k];if(!el.value.trim()){el.setAttribute('aria-invalid','true');missing.push(label)}}
+    if(missing.length){$('#formErr').textContent='Add the '+list(missing)+' first.';form.querySelector('[aria-invalid]').scrollIntoView({block:'center'});form.querySelector('[aria-invalid]').focus({preventScroll:true});return false}
+    const chk=dealChecks(read()), bad=Object.keys(chk.errors);
+    if(bad.length){bad.forEach(f=>form.elements[f]?.setAttribute('aria-invalid','true'));$('#formErr').textContent='Fix the dates marked in red first: '+Object.values(chk.errors)[0];form.elements[bad[0]].scrollIntoView({block:'center'});form.elements[bad[0]].focus({preventScroll:true});return false}
+    return true;
+  }
+  function commit(o,msg,dest){
+    o.updatedAt=new Date().toISOString();
+    if(!n(o.fee.wip)) o.fee.wip=String(calc(o).suggestedWip||'');
+    const i=deals.findIndex(x=>x.id===o.id); if(i>=0) deals[i]=o; else deals.unshift(o);
+    save(); toast(msg); location.hash=dest;
+  }
+  form.addEventListener('submit',e=>{
+    e.preventDefault();
+    if(mode!=='edit') return;
+    const o=read(), now=new Date().toISOString();
+    clearTimeout(autoTimer);
+    if(!created){ o.history.push({at:now,by:user.id,action:'created'}); created=true }
+    if($('#sendReview').checked){
+      if(!validate()) return;
+      const r=$('#reviewer').value;
+      if(!r){$('#formErr').textContent='Choose who should review this form.';$('#reviewer').setAttribute('aria-invalid','true');$('#reviewer').focus();return}
+      Object.assign(o,{status:'in_review',reviewer:r,submittedAt:now,reviewNote:''});
+      o.history.push({at:now,by:user.id,action:'submitted',to:r});
+      commit(o,'Sent to '+nameOf(r)+' for review','#mine');
+    } else {
+      $$('[aria-invalid]',form).forEach(i=>i.removeAttribute('aria-invalid'));
+      if(!o.name){form.elements.name.setAttribute('aria-invalid','true');$('#formErr').textContent='Add a deal name to save a draft.';form.elements.name.focus();return}
+      if(deal) o.history.push({at:now,by:user.id,action:'saved'});
+      commit(o,'Draft saved','#mine');
+    }
+  });
+  if(mode==='correct'){
+    $('#correctBtn').onclick=()=>{
+      if(!validate()) return;
+      const reason=$('#correctReason').value.trim();
+      if(!reason){$('#formErr').textContent='Say what you changed and why, so the correction can be traced.';$('#correctReason').setAttribute('aria-invalid','true');$('#correctReason').focus();return}
+      const o=read(), now=new Date().toISOString();
+      o.team=(o.team||[]).map(m=>{const old=(d.team||[]).find(x=>x.name===m.name);return {...m,cost:old?.cost??String(memberCost({...m,cost:undefined},o))}});
+      const changes=changedFields(d,o);
+      if(!changes.length){$('#formErr').textContent='Nothing has changed yet.';return}
+      o.corrections=[...(d.corrections||[]),{at:now,by:user.id,reason,changes}];
+      o.history.push({at:now,by:user.id,action:'corrected',note:reason});
+      audit('correction',`Corrected “${o.name}”: ${changes.join(', ')}. Reason: ${reason}`);
+      commit(o,'Correction saved','#deal/'+o.id);
+    };
+  }
+  if(mode==='review'){
+    $('#approveBtn').onclick=()=>{
+      if(!validate()) return;
+      const o=read(), now=new Date().toISOString();
+      freezeCosts(o);
+      Object.assign(o,{status:'approved',approvedBy:user.id,approvedAt:now,reviewNote:''});
+      o.history.push({at:now,by:user.id,action:'approved'});
+      commit(o,'Approved and added to the register','#reviews');
+    };
+    $('#returnBtn').onclick=()=>{
+      const note=$('#reviewNote').value.trim();
+      if(!note){$('#formErr').textContent=`Add a note so ${firstName(d.preparedBy)} knows what to change.`;$('#reviewNote').setAttribute('aria-invalid','true');$('#reviewNote').focus();return}
+      const o=read(), now=new Date().toISOString();
+      Object.assign(o,{status:'returned',reviewNote:note});
+      o.history.push({at:now,by:user.id,action:'returned',note});
+      commit(o,'Returned to '+nameOf(d.preparedBy),'#reviews');
+    };
+  }
+}
+
+const FIELD_LABELS={name:'Deal name',matter:'Matter number',practice:'Practice area',type:'Deal type',actingFor:'Client role',instructed:'Date of instruction',signed:'Signing date',completed:'Completion date',value:'Deal value',valueCcy:'Value currency',jurisdictions:'Jurisdictions',counterparties:'Counterparties',opposingCounsel:'Counsel to other parties',description:'Description',
+  'client.name':'Client name','client.sector':'Sector','client.country':'Client headquarters','client.status':'Client relationship','client.origination':'How the work came in','client.relationshipPartner':'Relationship partner',
+  originator:'Originating partner',leadPartner:'Lead partner','fee.arrangement':'Fee arrangement','fee.quote':'Fee quoted','fee.wip':'WIP','fee.bill':'Final bill','fee.disbursements':'Disbursements','fee.invoiceDate':'Invoice date','fee.paid':'Payment status','fee.approvedBy':'Write-off approver','fee.writeoffReasons':'Write-off reasons','fee.writeoffNote':'Write-off explanation',
+  referable:'Naming',significance:'Why the deal matters',notable:'Notable aspects',contacts:'Client contacts',team:'Deal team',localCounsel:'Local counsel'};
+function changedFields(a,b){
+  const pick=(o,k)=>k.split('.').reduce((x,p)=>x?.[p],o);
+  // compare rows field by field, ignoring key order, blanks and frozen costs
+  const row=o=>JSON.stringify(Object.entries(o||{}).filter(([k,v])=>k!=='cost'&&v!==''&&v!==false&&v!=null).map(([k,v])=>[k,String(v)]).sort());
+  const norm=(k,v)=>Array.isArray(v)?JSON.stringify(v.map(row)):JSON.stringify(v??'');
+  return Object.keys(FIELD_LABELS).filter(k=>norm(k,pick(a,k))!==norm(k,pick(b,k))&&!(pick(a,k)==null&&pick(b,k)==='')).map(k=>FIELD_LABELS[k]);
+}
+function sectionsDone(o){
+  const k=calc(o);
+  return {
+    's-deal':!!(o.name&&o.completed&&o.practice&&o.type&&o.description),
+    's-client':!!(o.client?.name&&(o.contacts||[]).some(c=>c.name)),
+    's-team':!!(o.originator&&o.leadPartner&&(o.team||[]).some(m=>m.name&&n(m.hours)>0)),
+    's-lc':(o.localCounsel||[]).every(l=>l.firm&&l.jurisdiction),
+    's-fees':!!(n(o.fee?.bill)&&k.wip&&(k.writeOff<=0||(o.fee?.writeoffReasons||[]).length)),
+    's-bd':!!(o.referable&&(o.significance||o.notable)),
+  };
+}
+
+/* ================= TOMBSTONE ================= */
+function tombstone(d,big){
+  const v=n(d.value);
+  const ph=(val,txt)=>val?esc(val):`<span class="empty">${txt}</span>`;
+  const value=v?new Intl.NumberFormat('en-GB',{style:'currency',currency:d.valueCcy||'USD',notation:'compact',maximumFractionDigits:1}).format(v):'';
+  return `<div class="tomb" ${big?'style="padding:48px 32px 40px"':''}><span class="ribbon" aria-hidden="true"></span>
+    <div class="tomb-client">${ph(d.client?.name,'Client name')}</div>
+    <div class="tomb-rule"></div>
+    <div class="tomb-deal">${ph(d.name,'Deal name')}</div>
+    ${value?`<div class="tomb-value">${value}</div>`:'<div style="height:18px"></div>'}
+    <div class="tomb-acted">${d.actingFor?'Counsel to '+esc(d.actingFor):'<span class="empty">Client</span>'}</div>
+    <div class="tomb-date">${d.completed?'Completed '+mfmt(d.completed):'<span class="empty">Completion date</span>'}</div>
+    <div class="tomb-foot">${esc([d.practice,d.jurisdictions].filter(Boolean).join(' · '))}</div>
+  </div><div class="tomb-plinth" aria-hidden="true"></div>`;
+}
+
+/* ================= REGISTER ================= */
+let F={q:'',year:'',practice:'',client:'',partner:'',originator:'',credit:'',outcome:'',group:'practice'};
+const OUTCOMES={finance:[['','All deals'],['loss','Loss-making'],['writeoff','With write-offs'],['underquote','Billed under quote']],mp:[['','All deals'],['loss','Loss-making'],['new','New clients']],
+  bd:[['','All deals'],['referable','Publicly referable'],['referees','With referees']],partner:[['','All deals'],['new','New clients']]};
+function filtered(){
+  const q=F.q.toLowerCase();
+  return registerDeals().filter(d=>{
+    if(F.year&&year(d)!==F.year) return false;
+    if(F.practice&&d.practice!==F.practice) return false;
+    if(F.client&&d.client?.name!==F.client) return false;
+    if(F.partner&&d.leadPartner!==F.partner) return false;
+    if(F.originator&&d.originator!==F.originator) return false;
+    if(F.credit&&canOriginate()&&(F.credit==='__none'?!needsCredit(d):!creditSplit(d).some(l=>l.name===F.credit))) return false;
+    const c=calc(d);
+    if(F.outcome==='loss'&&c.margin>=0) return false;
+    if(F.outcome==='writeoff'&&!c.writeOff) return false;
+    if(F.outcome==='underquote'&&!(c.quote>0&&c.bill<c.quote)) return false;
+    if(F.outcome==='referable'&&d.referable!=='public') return false;
+    if(F.outcome==='referees'&&!(d.contacts||[]).some(x=>x.referee)) return false;
+    if(F.outcome==='new'&&d.client?.status!=='New client') return false;
+    if(q){
+      const hay=[d.name,d.matter,d.description,d.notable,d.client?.name,d.client?.sector,d.counterparties,d.opposingCounsel,d.jurisdictions,d.leadPartner,d.originator,d.practice,d.type,
+        ...(d.team||[]).map(t=>t.name),...(d.localCounsel||[]).flatMap(l=>[l.firm,l.lawyers]),...(d.contacts||[]).map(c=>c.name)].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=>(b.completed||'').localeCompare(a.completed||''));
+}
+function renderRegister(app){
+  const lens=curLens(), lenses=cfg().lenses, all=registerDeals();
+  if(!OUTCOMES[lens].some(o=>o[0]===F.outcome)) F.outcome='';
+  const uniq=f=>[...new Set(all.map(f).filter(Boolean))].sort();
+  const sel=(k,label,opts)=>`<label class="field"><span>${label}</span><select class="input" data-f="${k}"><option value="">All</option>${opts.map(o=>`<option value="${esc(o)}" ${F[k]===o?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+  app.innerHTML=`<div class="fade-in">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+      <div><p class="eyebrow mb-2">${LENS_NAMES[lens]}</p><h1 class="text-[34px] md:text-[44px]">Deal register</h1><p class="hint mt-1">Deals approved by a reviewing partner.</p></div>
+      <div class="flex flex-wrap items-center gap-3">
+        ${lenses.length>1?`<div class="lens" role="group" aria-label="View">${lenses.map(k=>`<button type="button" data-lens="${k}" aria-pressed="${k===lens}">${LENS_NAMES[k]}</button>`).join('')}</div>`:''}
+        <button class="btn btn-ghost" id="exportBtn">Export CSV</button>
+      </div>
+    </div>
+    <div class="card p-4 md:p-5 mb-5 grid grid-cols-2 md:grid-cols-4 ${canOriginate()?'xl:grid-cols-8':'xl:grid-cols-7'} gap-3 items-end">
+      <label class="field col-span-2"><span>Search</span><input class="input" data-f="q" type="search" value="${esc(F.q)}" placeholder="Client, deal, counterparty, lawyer, local counsel…"></label>
+      ${sel('year','Year completed',uniq(year).reverse())}
+      ${sel('client','Client',uniq(d=>d.client?.name))}
+      ${sel('practice','Practice area',uniq(d=>d.practice))}
+      ${sel('originator','Originating partner',uniq(d=>d.originator))}
+      ${canOriginate()?`<label class="field"><span>Origination credit</span><select class="input" data-f="credit"><option value="">All</option>${[...new Set(all.flatMap(d=>creditSplit(d).map(l=>l.name)))].sort().map(o=>`<option value="${esc(o)}" ${F.credit===o?'selected':''}>${esc(o)}</option>`).join('')}<option value="__none" ${F.credit==='__none'?'selected':''}>Not set yet</option></select></label>`:''}
+      ${sel('partner','Lead partner',uniq(d=>d.leadPartner))}
+      <div class="col-span-full flex flex-wrap gap-2 items-center pt-1">
+        <span class="hint mr-1">Show</span>
+        ${OUTCOMES[lens].map(([v,t])=>`<label class="chip-check"><input type="radio" name="outcome" data-f="outcome" value="${v}" ${F.outcome===v?'checked':''}>${t}</label>`).join('')}
+        <button class="btn btn-quiet ml-auto" id="clearF">Clear filters</button>
+      </div>
+    </div>
+    <div id="results"></div>
+  </div>`;
+  $$('[data-f]').forEach(el=>el.addEventListener(el.type==='search'?'input':'change',()=>{F[el.dataset.f]=el.value;drawResults()}));
+  $('#clearF').onclick=()=>{F={...F,q:'',year:'',practice:'',client:'',partner:'',originator:'',credit:'',outcome:''};renderRegister(app)};
+  $('#exportBtn').onclick=exportCSV;
+  $$('[data-lens]').forEach(b=>b.onclick=()=>{store.set(LKEY,b.dataset.lens);renderRegister(app)});
+  drawResults();
+}
+function sum(arr,f){return arr.reduce((a,d)=>a+f(d),0)}
+function median(a){if(!a.length)return '–';a=[...a].sort((x,y)=>x-y);const m=a.length>>1;return String(a.length%2?a[m]:Math.round((a[m-1]+a[m])/2))}
+function drawResults(){
+  const lens=curLens();
+  const rows=filtered(), C=rows.map(d=>({d,c:calc(d)}));
+  const tot={deals:rows.length,hours:sum(C,x=>x.c.hours),wip:sum(C,x=>x.c.wip),bill:sum(C,x=>x.c.bill),wo:sum(C,x=>x.c.writeOff),margin:sum(C,x=>x.c.margin)};
+  const crossBorder=rows.filter(d=>(d.jurisdictions||'').includes(',')).length, newClients=rows.filter(d=>d.client?.status==='New client').length;
+  const medDays=median(C.map(x=>x.c.days).filter(v=>v!=null));
+  const stats={
+    finance:[['Billed',money(tot.bill),`${tot.deals} deals`],['WIP recorded',money(tot.wip),`${hrs(tot.hours)} hours`],['Written off',money(tot.wo),`${C.filter(x=>x.c.writeOff).length} deals affected`],
+      ['Realisation',pct(tot.bill/tot.wip),'billed ÷ WIP'],['Estimated margin',money(tot.margin),pct(tot.margin/tot.bill)+' of fees'],['Loss-making',String(C.filter(x=>x.c.margin<0).length),'deals']],
+    mp:[['Deals completed',String(tot.deals),''],['Hours',hrs(tot.hours),`${hrs(tot.deals?tot.hours/tot.deals:0)} per deal`],['Fees billed',money(tot.bill),pct(tot.bill/tot.wip)+' realisation'],
+      ['New clients',String(newClients),'first matter with us'],['Cross-border',String(crossBorder),'2+ jurisdictions'],['Median days to close',medDays,'instruction to completion']],
+    bd:[['Deals',String(tot.deals),''],['Publicly referable',String(rows.filter(d=>d.referable==='public').length),''],['Clients',String(new Set(rows.map(d=>d.client?.name)).size),''],
+      ['Referees available',String(sum(rows,d=>(d.contacts||[]).filter(c=>c.referee).length)),'client contacts'],['Jurisdictions',String(new Set(rows.flatMap(d=>(d.jurisdictions||'').split(',').map(s=>s.trim()).filter(Boolean))).size),''],
+      ['Local counsel firms',String(new Set(rows.flatMap(d=>(d.localCounsel||[]).map(l=>l.firm))).size),'']],
+    partner:[['Deals completed',String(tot.deals),''],['Hours',hrs(tot.hours),''],['Clients',String(new Set(rows.map(d=>d.client?.name)).size),''],
+      ['New clients',String(newClients),''],['Cross-border',String(crossBorder),'2+ jurisdictions'],['Median days to close',medDays,'instruction to completion']]
+  }[lens];
+  const head={
+    finance:`<th class="r">Hours</th><th class="r">Quoted</th><th class="r">WIP</th><th class="r">Billed</th><th class="r">Written off</th><th class="r">Realisation</th><th class="r">Margin</th>`,
+    mp:`<th class="r">Deal value</th><th>Type</th><th class="r">Team</th><th class="r">Hours</th><th class="r">Days</th><th>Client</th>`,
+    bd:`<th>Naming</th><th>Counterparties</th><th class="r">Referees</th><th>Jurisdictions</th>`,
+    partner:`<th class="r">Deal value</th><th>Type</th><th class="r">Team</th><th class="r">Days</th><th>Jurisdictions</th>`
+  }[lens];
+  const cells=({d,c})=>({
+    finance:`<td class="r num">${hrs(c.hours)}</td><td class="r num">${c.quote?money(c.quote):'–'}${c.quote>0&&c.bill<c.quote?`<div class="hint" style="color:var(--warn);font-size:11.5px">under by ${money(c.quote-c.bill)}</div>`:''}</td><td class="r num">${money(c.wip)}</td><td class="r num">${money(c.bill)}</td><td class="r num ${c.writeOff?'warn':''}">${c.writeOff?money(c.writeOff):'–'}</td><td class="r num">${pct(c.realisation)}</td>
+      <td class="r"><span class="pill ${c.margin<0?'pill-loss':'pill-gain'} num">${money(c.margin)}</span></td>`,
+    mp:`<td class="r num">${n(d.value)?moneyC(n(d.value),d.valueCcy||'USD'):'–'}</td><td>${esc(d.type)}</td><td class="r num">${(d.team||[]).length}</td><td class="r num">${hrs(c.hours)}</td><td class="r num">${c.days??'–'}</td>
+      <td><span class="pill ${d.client?.status==='New client'?'pill-gain':'pill-neutral'}">${esc(d.client?.status||'–')}</span></td>`,
+    bd:`<td><span class="pill ${d.referable==='public'?'pill-gain':d.referable==='confidential'?'pill-loss':'pill-warn'}">${esc(REFERABLE[d.referable]||'–')}</span></td><td>${esc(d.counterparties||'–')}</td>
+      <td class="r num">${(d.contacts||[]).filter(x=>x.referee).length}</td><td>${esc(d.jurisdictions||'–')}</td>`,
+    partner:`<td class="r num">${n(d.value)?moneyC(n(d.value),d.valueCcy||'USD'):'–'}</td><td>${esc(d.type)}</td><td class="r num">${(d.team||[]).length}</td><td class="r num">${c.days??'–'}</td><td>${esc(d.jurisdictions||'–')}</td>`
+  }[lens]);
+  $('#results').innerHTML=`
+    <div class="card-raised grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 mb-6 overflow-hidden">
+      ${stats.map(([l,v,s])=>`<div class="stat"><div class="eyebrow">${l}</div><div class="v">${v}</div><div class="s">${s||'&nbsp;'}</div></div>`).join('')}
+    </div>
+    <div class="card-raised overflow-hidden mb-8">
+      <div class="overflow-x-auto">
+      ${rows.length?`<table class="data"><thead><tr><th>Completed</th><th>Deal and client</th>${lens==='finance'?'':'<th>Lead partner</th>'}${head}</tr></thead>
+      <tbody>${C.map(x=>`<tr class="link" tabindex="0" data-id="${x.d.id}"><td class="num whitespace-nowrap">${dfmt(x.d.completed)}</td>
+        <td style="min-width:240px"><div class="font-semibold" style="line-height:1.4">${esc(x.d.name)}</div><div class="hint">${esc(x.d.client?.name)}${x.d.matter?' · <span class="mono">'+esc(x.d.matter)+'</span>':''}<br>${esc(x.d.practice)}${lens==='finance'?' · Lead: '+esc(x.d.leadPartner):''}</div>${canOriginate()?`<div class="mt-1">${needsCredit(x.d)?'<span class="pill pill-warn">Origination credit not set</span>':`<span class="hint" style="color:var(--tape-deep)">Origination: ${esc(creditText(x.d))}</span>`}</div>`:''}</td>
+${lens==='finance'?'':`<td class="whitespace-nowrap">${esc(x.d.leadPartner)}</td>`}${cells(x)}</tr>`).join('')}</tbody></table>`
+      :`<div class="p-10 text-center"><p class="serif text-[22px] mb-2">No deals match these filters</p><p class="hint">Loosen a filter or search for something else.</p></div>`}
+      </div>
+    </div>
+    ${rows.length?pivot(C,lens):''}`;
+  $$('tr.link').forEach(tr=>{const go=()=>location.hash='#deal/'+tr.dataset.id;tr.onclick=go;tr.onkeydown=e=>{if(e.key==='Enter')go()}});
+  const g=$('#groupBy'); if(g) g.onchange=()=>{F.group=g.value;drawResults()};
+}
+function pivot(C,lens){
+  const keys={practice:['Practice area',d=>d.practice],client:['Client',d=>d.client?.name],originator:['Originating partner',d=>d.originator],partner:['Lead partner',d=>d.leadPartner],year:['Year',year],sector:['Sector',d=>d.client?.sector],type:['Deal type',d=>d.type]};
+  const [label,kf]=keys[F.group];
+  const groups={};
+  C.forEach(x=>{const k=kf(x.d)||'Not recorded';(groups[k]??=[]).push(x)});
+  const M={
+    deals:['Deals',xs=>xs.length,v=>v], hours:['Hours',xs=>sum(xs,x=>x.c.hours),hrs], quote:['Quoted',xs=>sum(xs,x=>x.c.quote),v=>v?money(v):'–'], wip:['WIP',xs=>sum(xs,x=>x.c.wip),money], bill:['Billed',xs=>sum(xs,x=>x.c.bill),money],
+    wo:['Written off',xs=>sum(xs,x=>x.c.writeOff),v=>v?`<span class="warn">${money(v)}</span>`:'–'], real:['Realisation',xs=>sum(xs,x=>x.c.bill)/sum(xs,x=>x.c.wip),pct],
+    margin:['Margin',xs=>sum(xs,x=>x.c.margin),v=>`<span class="${v<0?'loss':'gain'}">${money(v)}</span>`],
+    clients:['Clients',xs=>new Set(xs.map(x=>x.d.client?.name)).size,v=>v], pub:['Publicly referable',xs=>xs.filter(x=>x.d.referable==='public').length,v=>v],
+    refs:['Referees',xs=>sum(xs,x=>(x.d.contacts||[]).filter(c=>c.referee).length),v=>v]
+  };
+  const spec={finance:{cols:['deals','hours','quote','wip','bill','wo','real','margin'],bar:'bill'},mp:{cols:['deals','hours','bill','real','margin'],bar:'bill'},
+    bd:{cols:['deals','clients','pub','refs'],bar:'deals'},partner:{cols:['deals','clients','hours'],bar:'deals'}}[lens];
+  const rows=Object.entries(groups).map(([k,xs])=>({k,v:Object.fromEntries(Object.entries(M).map(([m,[,f]])=>[m,f(xs)]))})).sort((a,b)=>b.v[spec.bar]-a.v[spec.bar]);
+  const max=Math.max(...rows.map(r=>r.v[spec.bar]),1), barAt=spec.cols.indexOf(spec.bar);
+  const th=spec.cols.map((m,i)=>`<th class="r">${M[m][0]}</th>${i===barAt?'<th style="width:18%"></th>':''}`).join('');
+  return `<div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+      <div><h2 class="text-[26px]">Totals by group</h2><p class="hint">For the deals shown above.</p></div>
+      <label class="field"><span>Group by</span><select class="input" id="groupBy">${Object.entries(keys).map(([k,[t]])=>`<option value="${k}" ${F.group===k?'selected':''}>${t}</option>`).join('')}</select></label>
+    </div>
+    <div class="card-raised overflow-x-auto"><table class="data"><thead><tr><th>${label}</th>${th}</tr></thead>
+    <tbody>${rows.map(r=>`<tr><td class="font-semibold">${esc(r.k)}</td>${spec.cols.map((m,i)=>`<td class="r num">${M[m][2](r.v[m])}</td>${i===barAt?`<td style="vertical-align:middle"><div class="meter" aria-hidden="true"><i style="width:${r.v[spec.bar]/max*100}%"></i></div></td>`:''}`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function exportCSV(){
+  const lens=curLens(), rows=filtered();
+  const ALL=['finance','mp','bd','partner'], FIN=['finance'], FM=['finance','mp'], BD=['bd'];
+  const cols=[['Matter',d=>d.matter,ALL],['Deal',d=>d.name,ALL],['Client name',d=>d.client?.name,ALL],['Sector',d=>d.client?.sector,ALL],['Client relationship',d=>d.client?.status,ALL],['How the work came in',d=>d.client?.origination,['mp','bd','partner']],
+    ['Practice',d=>d.practice,ALL],['Type',d=>d.type,ALL],['Client (role)',d=>d.actingFor,ALL],['Date of instruction',d=>d.instructed,ALL],['Signing date',d=>d.signed,ALL],['Completion date',d=>d.completed,ALL],
+    ['Deal value',d=>d.value,ALL],['Value currency',d=>d.valueCcy,ALL],['Jurisdictions',d=>d.jurisdictions,ALL],['Counterparties',d=>d.counterparties,ALL],['Counsel to other parties',d=>d.opposingCounsel,ALL],['Originating partner/associate',d=>d.originator,ALL],['Lead partner',d=>d.leadPartner,ALL],
+    ['Deal team',d=>(d.team||[]).map(t=>`${t.name} (${t.role}, ${t.hours}h)`).join('; '),ALL],['Local counsel',d=>(d.localCounsel||[]).map(l=>`${l.firm} [${l.jurisdiction}]: ${l.lawyers}`).join('; '),ALL],
+    ['Client contacts',d=>(d.contacts||[]).map(c=>[c.name,c.title,c.email,c.phone].filter(Boolean).join(', ')+(c.referee?' (referee)':'')).join('; '),BD],
+    ['Fee arrangement',d=>d.fee?.arrangement,FIN],['Hours',d=>calc(d).hours,[...FM,'partner']],[`Quoted (${CCY})`,d=>calc(d).quote||'',FIN],[`WIP (${CCY})`,d=>calc(d).wip,FIN],[`Billed (${CCY})`,d=>calc(d).bill,FM],[`Written off (${CCY})`,d=>calc(d).writeOff,FIN],
+    ['Write-off reasons',d=>(d.fee?.writeoffReasons||[]).join('; '),FIN],['Write-off explanation',d=>d.fee?.writeoffNote,FIN],['Realisation',d=>pct(calc(d).realisation),FM],[`Estimated margin (${CCY})`,d=>Math.round(calc(d).margin),FM],
+    ['Payment status',d=>d.fee?.paid,FIN],['Naming',d=>REFERABLE[d.referable],BD],['Description',d=>d.description,ALL],['Significance',d=>d.significance,[...BD,'mp','partner']],['Notable or unique aspects',d=>d.notable,[...BD,'mp','partner']],
+    ['Prepared by',d=>nameOf(d.preparedBy),ALL],['Approved by',d=>nameOf(d.approvedBy),ALL]].filter(c=>c[2].includes(lens));
+  if(canOriginate()) cols.push(['Origination credit',d=>creditText(d)],[`Origination credited fees (${CCY})`,d=>creditSplit(d).map(l=>`${l.name}: ${Math.round(calc(d).bill*n(l.pct)/100)}`).join('; ')]);
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const csv=[cols.map(c=>q(c[0])).join(','),...rows.map(d=>cols.map(c=>q(c[1](d))).join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`deal-register-${lens}-${today()}.csv`;a.click();
+  toast(`Exported ${rows.length} deals`);
+}
+
+/* ================= PEOPLE AND ACCESS (practice manager) ================= */
+const GRADES=['Partner','Counsel','Senior associate','Associate','Trainee','Paralegal'];
+const ACCESS_ORDER=['all','partner','associate','finance','bd'];
+const ACCESS_HELP={
+  all:'Every register view: management, finance and business development. People graded Partner at this level can also review.',
+  partner:'Reviews and approves deal sheets. Sees deal overviews without fee figures.',
+  associate:'Creates deal sheets and sees their own. No register.',
+  finance:'Finance view of the register and of each deal. View only: can\'t create deal sheets.',
+  bd:'Business development view of the register and of each deal. View only: can\'t create deal sheets.'};
+function renderPeople(app,editId){
+  const user=me();
+  if(!user?.admin){ location.hash=cfg().home; return }
+  const people=[...USERS].sort((a,b)=>((a.status==='left')-(b.status==='left'))||ACCESS_ORDER.indexOf(a.access)-ACCESS_ORDER.indexOf(b.access)||a.name.localeCompare(b.name));
+  const active=activeUsers();
+  const ed=editId==='new'?{access:'associate',teamRole:'Associate'}:editId?userById(editId):null;
+  const self=ed&&ed.id===user.id;
+  const pendingFor=id=>deals.filter(d=>d.status==='in_review'&&d.reviewer===id).length;
+  app.innerHTML=`<div class="fade-in">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+      <div><p class="eyebrow mb-2">Practice manager</p><h1 class="text-[34px] md:text-[44px]">People and access</h1>
+        <p class="hint mt-2 max-w-[74ch]" style="font-size:15px">Who can use the system, what they can see, and their grade and charge-out rate. In the live system, accounts and access levels come from Microsoft 365 and are managed by IT; in this prototype you can set them here to try it out.</p></div>
+      ${ed?'':'<button class="btn btn-primary" id="addPerson">Add a person</button>'}
+    </div>
+    <div class="card-raised grid grid-cols-2 md:grid-cols-4 mb-6 overflow-hidden">
+      <div class="stat"><div class="eyebrow">Active people</div><div class="v">${active.length}</div></div>
+      <div class="stat"><div class="eyebrow">Fee earners</div><div class="v">${active.filter(u=>u.teamRole).length}</div><div class="s">appear in deal team lists</div></div>
+      <div class="stat"><div class="eyebrow">Can review</div><div class="v">${active.filter(u=>u.review).length}</div><div class="s">partner level</div></div>
+      <div class="stat"><div class="eyebrow">Left the firm</div><div class="v">${USERS.length-active.length}</div><div class="s">can't sign in</div></div>
+    </div>
+    ${ed?`<form id="personForm" class="card-raised p-6 md:p-8 mb-8" novalidate>
+      <h2 class="text-[24px] mb-5">${editId==='new'?'Add a person':'Edit '+esc(ed.name)}</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <label class="field"><span>Full name<em>*</em></span><input class="input" name="name" value="${esc(ed.name)}" required></label>
+        <label class="field"><span>Work email<em>*</em></span><input class="input" type="email" name="email" value="${esc(ed.email)}" required ${editId==='new'?'':'readonly'}>${editId==='new'?'':'<span class="hint">Set by IT with their Microsoft 365 account.</span>'}</label>
+        <label class="field"><span>Job title<em>*</em></span><input class="input" name="title" value="${esc(ed.title)}" required placeholder="e.g. Associate"></label>
+        <label class="field"><span>Access level</span><select class="input" name="access" ${self?'disabled':''}>${ACCESS_ORDER.map(k=>`<option value="${k}" ${ed.access===k?'selected':''}>${ACCESS[k].label}</option>`).join('')}</select>
+          <span class="hint" data-access-help></span>${self?'<span class="hint">You can\'t change your own access level.</span>':''}</label>
+        <label class="field"><span>Grade</span><select class="input" name="teamRole"><option value="">Not a fee earner</option>${GRADES.map(g=>`<option ${ed.teamRole===g?'selected':''}>${g}</option>`).join('')}</select><span class="hint">Fee earners appear in deal team, lead partner and originator lists.</span></label>
+        <label class="field"><span>Charge-out rate per hour (${CCY})</span><input class="input num" name="rate" inputmode="decimal" value="${esc(ed.rate||'')}" data-rate-default><span class="hint">Leave blank to use the grade's standard rate. Changing it doesn't alter completed deals.</span></label>
+      </div>
+      <div class="mt-6 pt-6" style="border-top:1px solid var(--line-2)" data-cost-section>
+        <h3 class="text-[19px] mb-1">Cost to the firm</h3>
+        <p class="hint mb-4 max-w-[80ch]">What this person costs the firm per hour (salary, benefits and overheads). A new cost applies from its effective date. Deals already approved keep the cost they were approved with; other deals use the cost in force on their completion date.</p>
+        ${(ed.costHistory||[]).length?`<div class="overflow-x-auto mb-4" style="max-width:520px"><table class="data"><thead><tr><th>Effective from</th><th class="r">Cost / hr</th><th></th></tr></thead><tbody>
+          ${[...ed.costHistory].sort((a,b)=>b.from.localeCompare(a.from)).map(c=>`<tr><td class="num">${dfmt(c.from)}</td><td class="r num">${money(n(c.rate))}</td><td>${c.from>today()?'<span class="pill pill-warn">Scheduled</span>':costEntryOn(ed)===c?'<span class="pill pill-gain">Current</span>':'<span class="hint">Past</span>'}</td></tr>`).join('')}
+        </tbody></table></div>`:'<p class="hint mb-4">No personal cost recorded yet; the grade\'s standard cost is used.</p>'}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[520px]">
+          <label class="field"><span>${(ed.costHistory||[]).length?'New cost per hour':'Cost per hour'} (${CCY})</span><input class="input num" name="cost" inputmode="decimal" placeholder="0"></label>
+          <label class="field"><span>Effective from</span><input class="input" type="date" name="costFrom" value="${today()}"></label>
+        </div>
+      </div>
+      <p class="mt-5 text-[14px]" data-review-note></p>
+      ${ed.origination?'<p class="mt-1 text-[14px]"><span class="pill pill-warn">Sets origination credits</span> <span class="hint">Managing partner only; not changeable here.</span></p>':''}
+      <div class="flex flex-wrap items-center gap-3 mt-6"><p class="err" id="personErr" role="alert"></p>
+        <div class="flex gap-2 ml-auto"><button type="button" class="btn btn-ghost" id="cancelPerson">Cancel</button><button class="btn btn-primary" type="submit">${editId==='new'?'Add person':'Save changes'}</button></div></div>
+    </form>`:''}
+    <div class="card-raised overflow-hidden mb-10"><div class="overflow-x-auto"><table class="data">
+      <thead><tr><th>Person</th><th>Job title</th><th>Access level</th><th>Grade</th><th class="r">Charge-out / hr</th><th class="r">Cost / hr</th><th>Can review</th><th>Status</th><th></th></tr></thead>
+      <tbody>${people.map(u=>`<tr style="${u.status==='left'?'opacity:.6':''}">
+        <td style="min-width:230px"><div class="flex items-center gap-3"><span class="avatar" aria-hidden="true">${initials(u.name)}</span><div style="line-height:1.35"><div class="font-semibold">${esc(u.name)}${u.id===user.id?' <span class="hint">(you)</span>':''}</div><div class="hint mono" style="font-size:12px">${esc(u.email)}</div></div></div></td>
+        <td>${esc(u.title)}</td>
+        <td><span class="pill pill-neutral">${ACCESS[u.access].label}</span>${u.origination?' <span class="pill pill-warn">Origination</span>':''}${u.admin?' <span class="pill pill-neutral">Admin</span>':''}</td>
+        <td>${esc(u.teamRole||'–')}</td>
+        <td class="r num">${u.teamRole?money(rateOf(u)):'–'}${u.teamRole&&!n(u.rate)?'<div class="hint" style="font-size:11px">standard</div>':''}</td>
+        <td class="r num">${u.teamRole?(costEntryOn(u)?`${money(costOn(u))}<div class="hint" style="font-size:11px">since ${dfmt(costEntryOn(u).from)}</div>`:`${money(ROLES[u.teamRole].cost)}<div class="hint" style="font-size:11px">standard</div>`):'–'}${(u.costHistory||[]).some(c=>c.from>today())?'<div class="hint" style="font-size:11px;color:var(--warn)">change scheduled</div>':''}</td>
+        <td>${u.review?'<span class="pill pill-gain">Yes</span>':'<span class="hint">No</span>'}</td>
+        <td>${u.status==='left'?'<span class="pill pill-loss">Left</span>':'<span class="hint">Active</span>'}</td>
+        <td class="r whitespace-nowrap">${u.status==='left'
+          ?`<button class="btn btn-quiet" data-reactivate="${u.id}">Reactivate</button>`
+          :`<button class="btn btn-quiet" data-edit="${u.id}">Edit</button>${u.id===user.id||u.origination?'':`<button class="btn btn-quiet" data-leave="${u.id}">Mark as left</button>`}`}</td>
+      </tr>`).join('')}</tbody></table></div></div>
+    <h2 class="text-[26px] mb-1">What each access level can see</h2>
+    <p class="hint mb-4">Everyone except finance and BD can create deal sheets. Only the managing partner sees origination credits.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">${ACCESS_ORDER.map(k=>`<div class="access-card"><p class="font-semibold mb-1" style="color:var(--ink)">${ACCESS[k].label}</p><p class="hint">${ACCESS_HELP[k]}</p><p class="hint mt-2">${active.filter(u=>u.access===k).map(u=>esc(u.name)).join(', ')||'Nobody yet'}</p></div>`).join('')}</div>
+  </div>`;
+  const again=id=>{renderPeople(app,id);window.scrollTo({top:0})};
+  $('#addPerson')&&($('#addPerson').onclick=()=>again('new'));
+  $$('[data-edit]').forEach(b=>b.onclick=()=>again(b.dataset.edit));
+  $$('[data-reactivate]').forEach(b=>b.onclick=()=>{const u=userById(b.dataset.reactivate);u.status='active';savePeople();audit('access',`Reactivated ${u.name}; they can sign in again`);toast(u.name+' can sign in again');again()});
+  $$('[data-leave]').forEach(b=>b.onclick=()=>{
+    const u=userById(b.dataset.leave), pending=pendingFor(u.id);
+    if(!confirm(`Mark ${u.name} as left?\n\nThey won't be able to sign in and will be removed from team, lead partner and reviewer lists. Their past deals stay in the register under their name.${pending?`\n\n${pending} form${pending>1?'s are':' is'} waiting for their review. ${pending>1?'These':'It'} will go back to whoever prepared ${pending>1?'them':'it'}, to send to another partner.`:''}`)) return;
+    const now=new Date().toISOString();
+    deals.filter(d=>d.status==='in_review'&&d.reviewer===u.id).forEach(d=>{d.status='returned';d.reviewNote=`${u.name} has left the firm. Please send this to another partner for review.`;d.updatedAt=now;(d.history??=[]).push({at:now,by:user.id,action:'returned',note:'Reviewer left the firm'})});
+    save(); u.status='left'; savePeople(); audit('access',`Marked ${u.name} as left the firm${pending?`; ${pending} pending review${pending>1?'s':''} sent back to the preparer`:''}`); toast(u.name+' marked as left'); again();
+  });
+  if(!ed) return;
+  const f=$('#personForm');
+  const sync=()=>{
+    const acc=f.access.value, g=f.teamRole.value;
+    $('[data-access-help]').textContent=ACCESS_HELP[acc];
+    f.rate.placeholder=g?String(ROLES[g].rate):'Not a fee earner'; f.rate.disabled=!g;
+    $('[data-cost-section]').hidden=!g;
+    const r=canReview({access:acc,teamRole:g});
+    $('[data-review-note]').innerHTML=r?'<span class="pill pill-gain">Can review</span> <span class="hint">Partner-level access, so this person can review and approve deal sheets.</span>':'<span class="pill pill-neutral">Can\'t review</span> <span class="hint">Only partner-level access can review deal sheets.</span>';
+  };
+  f.addEventListener('change',sync); sync();
+  f.addEventListener('input',e=>{e.target.removeAttribute('aria-invalid');$('#personErr').textContent=''});
+  $('#cancelPerson').onclick=()=>again();
+  f.onsubmit=e=>{
+    e.preventDefault();
+    $$('[aria-invalid]',f).forEach(i=>i.removeAttribute('aria-invalid'));
+    const v={name:f.name.value.trim(),email:f.email.value.trim().toLowerCase(),title:f.title.value.trim(),access:self?ed.access:f.access.value,teamRole:f.teamRole.value||undefined,rate:f.teamRole.value&&f.rate.value.trim()?String(n(f.rate.value)):undefined};
+    const miss=[['name','full name'],['email','work email'],['title','job title']].filter(([k])=>!v[k]);
+    if(miss.length){miss.forEach(([k])=>f[k].setAttribute('aria-invalid','true'));$('#personErr').textContent='Add their '+list(miss.map(m=>m[1]))+'.';f[miss[0][0]].focus();return}
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)){f.email.setAttribute('aria-invalid','true');$('#personErr').textContent='Enter a valid email address, like name@firm.example.';f.email.focus();return}
+    const newCost=f.teamRole.value?f.cost.value.trim():'';
+    if(newCost&&!(n(newCost)>0)){f.cost.setAttribute('aria-invalid','true');$('#personErr').textContent='Enter the cost per hour as a number, like 150.';f.cost.focus();return}
+    if(newCost&&!f.costFrom.value){f.costFrom.setAttribute('aria-invalid','true');$('#personErr').textContent='Choose the date the new cost applies from.';f.costFrom.focus();return}
+    const addCost=u=>{ if(!newCost) return; u.costHistory=[...(u.costHistory||[]).filter(c=>c.from!==f.costFrom.value),{from:f.costFrom.value,rate:String(n(newCost))}].sort((a,b)=>a.from.localeCompare(b.from)) };
+    if(USERS.some(u=>u.email.toLowerCase()===v.email&&u.id!==ed.id)){f.email.setAttribute('aria-invalid','true');$('#personErr').textContent='Someone already has that email address.';f.email.focus();return}
+    if(editId==='new'){
+      const id=v.name.toLowerCase().replace(/[^a-z]+/g,'-').replace(/^-|-$/g,'')+'-'+uid().slice(0,4);
+      const nu={id,...v,status:'active'}; addCost(nu); USERS.push(nu); savePeople();
+      audit('access',`Added ${v.name} (${v.title}) with ${ACCESS[v.access].label} access${v.teamRole?`, graded ${v.teamRole}`:''}`);
+      if(newCost) audit('cost',`Set ${v.name}'s cost to the firm at ${money(n(newCost))}/hr from ${dfmt(f.costFrom.value)}`); toast('Added '+v.name+'. They can sign in now.');
+    } else {
+      const u=userById(ed.id); const oldName=u.name;
+      const ch=[]; if(u.access!==v.access) ch.push(`access ${ACCESS[u.access].label} → ${ACCESS[v.access].label}`); if(u.title!==v.title) ch.push(`title “${u.title}” → “${v.title}”`); if((u.teamRole||'')!==(v.teamRole||'')) ch.push(`grade ${u.teamRole||'none'} → ${v.teamRole||'none'}`); if(String(u.rate||'')!==String(v.rate||'')) ch.push(`charge-out rate ${u.rate?money(n(u.rate)):'standard'} → ${v.rate?money(n(v.rate)):'standard'}`); if(oldName!==v.name) ch.push(`name “${oldName}” → “${v.name}”`);
+      if(ch.length) audit('access',`Changed ${v.name}: ${ch.join('; ')}`);
+      if(newCost) audit('cost',`Set ${v.name}'s cost to the firm at ${money(n(newCost))}/hr from ${dfmt(f.costFrom.value)}`);
+      Object.assign(u,v); addCost(u); if(!v.teamRole) delete u.teamRole; if(!v.rate) delete u.rate;
+      savePeople(); toast('Saved changes to '+v.name);
+      if(oldName!==v.name) toast('Saved. Past deals keep the name '+oldName+'.');
+    }
+    renderTopbar(me(),'people'); again();
+  };
+}
+
+/* ================= CHARTS (inline SVG) ================= */
+const VIZ={s:['#2a78d6','#eb6834','#1baf7a']};
+function niceMax(v){ if(!(v>0)) return 1; const e=10**Math.floor(Math.log10(v)), f=v/e; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e }
+const barPath=(x,y,w,h)=>{ if(h<=0) return ''; const r=Math.min(4,w/2,h); return `M${x},${y+h}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h}Z` };
+const hbarPath=(x,y,w,h)=>{ if(w<=0) return ''; const r=Math.min(4,h/2,w); return `M${x},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${y+h-r}Q${x+w},${y+h} ${x+w-r},${y+h}H${x}Z` };
+let VIZ_TIPS=[];
+function tipAttr(head,rows){ VIZ_TIPS.push({head,rows}); return `data-tip="${VIZ_TIPS.length-1}" tabindex="0"` }
+function legend(series){ return series.length<2?'':`<div class="viz-legend">${series.map((s,i)=>`<span><i style="background:${VIZ.s[i]}"></i>${esc(s.name)}</span>`).join('')}</div>` }
+function tableView(cats,series,fmt,catLabel){ return `<details class="tbl"><summary>Show as table</summary><div class="overflow-x-auto"><table class="data"><thead><tr><th>${esc(catLabel)}</th>${series.map(s=>`<th class="r">${esc(s.name)}</th>`).join('')}</tr></thead><tbody>${cats.map((c,i)=>`<tr><td>${esc(c)}</td>${series.map(s=>`<td class="r num">${s.values[i]==null?'–':fmt(s.values[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>` }
+// Grouped columns: one hit area per category, tooltip lists every series
+function colChart({cats,series,fmt,tick,catLabel}){
+  const W=640,H=262,L=66,R=8,T=12,B=46, pw=W-L-R, ph=H-T-B;
+  const max=niceMax(Math.max(0,...series.flatMap(s=>s.values.map(v=>v||0))));
+  const gw=pw/cats.length, inner=Math.min(gw*.72,28*series.length+2*(series.length-1)), bw=(inner-2*(series.length-1))/series.length;
+  const y=v=>T+ph-(v/max)*ph;
+  let g='';
+  for(let k=0;k<=4;k++){const v=max*k/4, yy=y(v); g+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="${k?'var(--grid)':'var(--axis)'}" stroke-width="1"/><text x="${L-8}" y="${yy+4}" text-anchor="end">${tick(v)}</text>`}
+  cats.forEach((c,i)=>{
+    const x0=L+gw*i+(gw-inner)/2;
+    series.forEach((s,j)=>{const v=s.values[i]||0; g+=`<path d="${barPath(x0+j*(bw+2),y(v),bw,T+ph-y(v))}" fill="${VIZ.s[j]}"/>`});
+    const words=String(c).split(' '), cut=c.length>12&&words.length>1?Math.ceil(words.length/2):0, cx=L+gw*i+gw/2;
+    g+=cut?`<text x="${cx}" y="${H-20}" text-anchor="middle"><tspan x="${cx}">${esc(words.slice(0,cut).join(' '))}</tspan><tspan x="${cx}" dy="15">${esc(words.slice(cut).join(' '))}</tspan></text>`:`<text x="${cx}" y="${H-12}" text-anchor="middle">${esc(c)}</text>`;
+    g+=`<rect class="hit" x="${L+gw*i}" y="${T}" width="${gw}" height="${ph}" ${tipAttr(c,series.map((s,j)=>({color:VIZ.s[j],name:s.name,value:s.values[i]==null?'–':fmt(s.values[i])})))} aria-label="${esc(c)}: ${esc(series.map(s=>s.name+' '+(s.values[i]==null?'none':fmt(s.values[i]))).join(', '))}"/>`;
+  });
+  return `<div class="viz">${legend(series)}<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(series.map(s=>s.name).join(' and '))} by ${esc(catLabel.toLowerCase())}">${g}</svg>${tableView(cats,series,fmt,catLabel)}</div>`;
+}
+// Single line with markers; gaps where a period has no deals; crosshair per period
+function lineChart({cats,values,fmt,tick,name,catLabel,floor=0}){
+  const W=640,H=236,L=50,R=22,T=18,B=34, pw=W-L-R, ph=H-T-B;
+  const vals=values.filter(v=>v!=null), max=Math.max(1,niceMax(Math.max(...vals,0))), min=floor;
+  const x=i=>L+(cats.length<2?pw/2:pw*i/(cats.length-1)), y=v=>T+ph-((v-min)/(max-min))*ph;
+  let g='';
+  for(let k=0;k<=4;k++){const v=min+(max-min)*k/4, yy=y(v); g+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="${k?'var(--grid)':'var(--axis)'}"/><text x="${L-8}" y="${yy+4}" text-anchor="end">${tick(v)}</text>`}
+  let path='', pen=false;
+  values.forEach((v,i)=>{ if(v==null){pen=false;return} path+=(pen?'L':'M')+x(i)+','+y(v); pen=true });
+  g+=`<path d="${path}" fill="none" stroke="${VIZ.s[0]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  values.forEach((v,i)=>{ if(v!=null) g+=`<circle cx="${x(i)}" cy="${y(v)}" r="4.5" fill="${VIZ.s[0]}" stroke="var(--raised)" stroke-width="2"/>` });
+  const last=values.map((v,i)=>[v,i]).filter(([v])=>v!=null).pop();
+  if(last) g+=`<text class="vlabel" x="${x(last[1])}" y="${y(last[0])-12}" text-anchor="middle">${fmt(last[0])}</text>`;
+  const band=cats.length<2?pw:pw/(cats.length-1);
+  cats.forEach((c,i)=>{ g+=`<text x="${x(i)}" y="${H-12}" text-anchor="middle">${esc(cats.length>6?c.replace(/ (\d\d)(\d\d)$/,' ’$2'):c)}</text><rect class="hit" x="${x(i)-band/2}" y="${T}" width="${band}" height="${ph}" ${tipAttr(c,[{color:VIZ.s[0],name,value:values[i]==null?'No deals':fmt(values[i])}])} aria-label="${esc(c)}: ${values[i]==null?'no deals':fmt(values[i])}"/>` });
+  return `<div class="viz"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)} by ${esc(catLabel.toLowerCase())}">${g}</svg>${tableView(cats,[{name,values}],fmt,catLabel)}</div>`;
+}
+// Horizontal bars, sorted, value labelled at the end of each bar
+function hbarChart({cats,values,fmt,name,catLabel}){
+  const W=640,rowH=36,L=226,R=96,T=4, H=T+rowH*cats.length+4, pw=W-L-R, max=niceMax(Math.max(...values,0));
+  let g='';
+  cats.forEach((c,i)=>{ const yy=T+i*rowH, w=pw*(values[i]/max);
+    g+=`<text x="${L-10}" y="${yy+rowH/2+4}" text-anchor="end" style="fill:var(--ink-2)">${esc(c.length>30?c.slice(0,29)+'…':c)}</text>`;
+    g+=`<path d="${hbarPath(L,yy+7,w,rowH-14)}" fill="${VIZ.s[0]}"/><text class="vlabel" x="${L+w+8}" y="${yy+rowH/2+4}">${fmt(values[i])}</text>`;
+    g+=`<rect class="hit" x="0" y="${yy}" width="${W}" height="${rowH}" ${tipAttr(c,[{color:VIZ.s[0],name,value:fmt(values[i])}])} aria-label="${esc(c)}: ${fmt(values[i])}"/>`; });
+  g+=`<line x1="${L}" x2="${L}" y1="${T}" y2="${H-4}" stroke="var(--axis)"/>`;
+  return `<div class="viz"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)} by ${esc(catLabel.toLowerCase())}">${g}</svg>${tableView(cats,[{name,values}],fmt,catLabel)}</div>`;
+}
+function wireTips(root){
+  const tip=$('#vizTip');
+  const show=(el,x,y)=>{ const t=VIZ_TIPS[el.dataset.tip]; if(!t) return; tip.replaceChildren();
+    const h=document.createElement('div'); h.className='t-head'; h.textContent=t.head; tip.append(h);
+    t.rows.forEach(r=>{const row=document.createElement('div');row.className='t-row';const k=document.createElement('span');k.className='t-key';k.style.background=r.color;const b=document.createElement('b');b.textContent=r.value;const nm=document.createElement('span');nm.className='hint';nm.textContent=r.name;row.append(k,b,nm);tip.append(row)});
+    tip.hidden=false; const w=tip.offsetWidth, hh=tip.offsetHeight; tip.style.left=Math.min(window.innerWidth-w-8,x+14)+'px'; tip.style.top=Math.max(8,y-hh-10)+'px' };
+  $$('[data-tip]',root).forEach(el=>{
+    el.addEventListener('pointermove',e=>show(el,e.clientX,e.clientY));
+    el.addEventListener('pointerleave',()=>tip.hidden=true);
+    el.addEventListener('focus',()=>{const r=el.getBoundingClientRect();show(el,r.left+r.width/2,r.top+20)});
+    el.addEventListener('blur',()=>tip.hidden=true);
+  });
+}
+
+/* ================= INSIGHTS (management and finance) ================= */
+let IF={practice:''};
+const quarterOf=d=>{const [y,m]=d.split('-');return `${y}-Q${Math.ceil(m/3)}`};
+function renderInsights(app){
+  VIZ_TIPS=[];
+  const all=registerDeals(), rows=all.filter(d=>!IF.practice||d.practice===IF.practice);
+  const C=rows.map(d=>({d,c:calc(d)}));
+  const qs=[...new Set(rows.map(d=>quarterOf(d.completed)))].sort();
+  const quarters=[]; if(qs.length){let [y,q]=qs[0].split('-Q').map(Number); const [ey,eq]=qs[qs.length-1].split('-Q').map(Number); while(y<ey||(y===ey&&q<=eq)){quarters.push(`${y}-Q${q}`); q++; if(q>4){q=1;y++}}}
+  const qLabel=k=>{const [y,q]=k.split('-');return `${q} ${y}`};
+  const inQ=k=>C.filter(x=>quarterOf(x.d.completed)===k);
+  const billed=quarters.map(k=>sum(inQ(k),x=>x.c.bill)), written=quarters.map(k=>sum(inQ(k),x=>x.c.writeOff));
+  const real=quarters.map(k=>{const xs=inQ(k), w=sum(xs,x=>x.c.wip); return xs.length&&w?sum(xs,x=>x.c.bill)/w:null});
+  const reasons={}; C.forEach(({d,c})=>{ if(c.writeOff<=0) return; const rs=d.fee?.writeoffReasons?.length?d.fee.writeoffReasons:['No reason given']; rs.forEach(r=>reasons[r]=(reasons[r]||0)+c.writeOff/rs.length) });
+  const reasonList=Object.entries(reasons).sort((a,b)=>b[1]-a[1]);
+  const years=[...new Set(rows.map(year))].sort().slice(-3), practices=[...new Set(rows.map(d=>d.practice))].sort((a,b)=>sum(C.filter(x=>x.d.practice===b),x=>x.c.bill)-sum(C.filter(x=>x.d.practice===a),x=>x.c.bill));
+  const byPractice=years.map(y=>({name:y,values:practices.map(pr=>sum(C.filter(x=>x.d.practice===pr&&year(x.d)===y),x=>x.c.bill))}));
+  const credit={}; if(canOriginate()) rows.forEach(d=>creditSplit(d).forEach(l=>credit[l.name]=(credit[l.name]||0)+calc(d).bill*n(l.pct)/100));
+  const creditList=Object.entries(credit).sort((a,b)=>b[1]-a[1]);
+  const under=C.filter(x=>x.c.quote>0&&x.c.bill<x.c.quote);
+  const tot={bill:sum(C,x=>x.c.bill),wip:sum(C,x=>x.c.wip),wo:sum(C,x=>x.c.writeOff)};
+  const tick=v=>moneyC(v), pc=v=>Math.round(v*100)+'%';
+  const card=(title,sub,body)=>`<section class="card-raised p-5 md:p-6 min-w-0"><h2 class="text-[21px]">${title}</h2><p class="hint mb-4">${sub}</p>${body}</section>`;
+  app.innerHTML=`<div class="fade-in">
+    <div class="mb-6"><p class="eyebrow mb-2">Firm data</p><h1 class="text-[34px] md:text-[44px]">Insights</h1>
+      <p class="hint mt-2" style="font-size:15px">Trends across approved deals. Hover or tab to any bar or point for exact figures; each chart has a table view.</p></div>
+    <div class="flex flex-wrap items-end gap-3 mb-6"><label class="field" style="min-width:220px"><span>Practice area</span><select class="input" id="ifPractice"><option value="">All practice areas</option>${[...new Set(all.map(d=>d.practice))].sort().map(pr=>`<option ${IF.practice===pr?'selected':''}>${esc(pr)}</option>`).join('')}</select></label></div>
+    <div class="card-raised grid grid-cols-2 md:grid-cols-4 mb-6 overflow-hidden">
+      <div class="stat"><div class="eyebrow">Fees billed</div><div class="v">${money(tot.bill)}</div><div class="s">${rows.length} deals</div></div>
+      <div class="stat"><div class="eyebrow">Realisation</div><div class="v">${pct(tot.bill/tot.wip)}</div><div class="s">billed ÷ WIP</div></div>
+      <div class="stat"><div class="eyebrow">Written off</div><div class="v">${money(tot.wo)}</div><div class="s">${pct(tot.wo/tot.wip)} of WIP</div></div>
+      <div class="stat"><div class="eyebrow">Billed under quote</div><div class="v">${under.length}</div><div class="s">${under.length?money(sum(under,x=>x.c.quote-x.c.bill))+' below quotes':'deals'}</div></div>
+    </div>
+    ${rows.length?`<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      ${card('Fees billed and written off','By quarter the deal completed.',colChart({cats:quarters.map(qLabel),series:[{name:'Fees billed',values:billed},{name:'Written off',values:written}],fmt:money,tick,catLabel:'Quarter'}))}
+      ${card('Realisation','Fees billed as a share of WIP, by quarter. Gaps are quarters with no completed deals.',lineChart({cats:quarters.map(qLabel),values:real,fmt:pc,tick:pc,name:'Realisation',catLabel:'Quarter'}))}
+      ${card('Why WIP was written off','Written-off WIP by reason. Where a deal gives several reasons, its write-off is split between them.',reasonList.length?hbarChart({cats:reasonList.map(r=>r[0]),values:reasonList.map(r=>r[1]),fmt:money,name:'Written off',catLabel:'Reason'}):'<p class="hint">No write-offs in this selection.</p>')}
+      ${card('Fees billed by practice area','Compared year on year.',colChart({cats:practices,series:byPractice,fmt:money,tick,catLabel:'Practice area'}))}
+      ${creditList.length?card('Origination credit by person','Credited fees across all deals. Only you can see this chart.',hbarChart({cats:creditList.map(r=>r[0]),values:creditList.map(r=>r[1]),fmt:money,name:'Credited fees',catLabel:'Person'})):''}
+    </div>`:'<div class="card p-8 text-center"><p class="serif text-[22px]">No approved deals in this practice area yet</p></div>'}
+  </div>`;
+  $('#ifPractice').onchange=e=>{IF.practice=e.target.value;renderInsights(app)};
+  wireTips(app);
+}
+
+/* ================= LOCAL COUNSEL DIRECTORY ================= */
+let LF={q:'',j:''};
+function renderCounsel(app){
+  const showFees=['all','finance'].includes(me().access);
+  const all=counselDirectory(), js=[...new Set(all.flatMap(f=>f.jurisdictions))].sort();
+  const draw=()=>{
+    const q=LF.q.toLowerCase(), rows=all.filter(f=>(!LF.j||f.jurisdictions.includes(LF.j))&&(!q||[f.firm,...f.lawyers,...f.jurisdictions].join(' ').toLowerCase().includes(q)));
+    $('#lcResults').innerHTML=rows.length?`<div class="card-raised overflow-hidden"><div class="overflow-x-auto"><table class="data"><thead><tr><th>Firm</th><th>Jurisdiction</th><th>Deals</th><th>Last used</th><th>Rating</th>${showFees?'<th class="r">Fees paid</th>':''}</tr></thead><tbody>
+      ${rows.map(f=>`<tr><td style="min-width:220px"><div class="font-semibold">${esc(f.firm)}</div><div class="hint">${esc(f.lawyers.join(', ')||'No lawyers recorded')}</div></td>
+        <td>${esc(f.jurisdictions.join(', '))}</td>
+        <td style="min-width:220px"><details><summary class="cursor-pointer">${f.uses.length} deal${f.uses.length>1?'s':''}</summary><ul class="mt-1">${f.uses.map(u=>`<li class="hint">${u.deal.status==='approved'&&cfg().lenses.length?`<a href="#deal/${u.deal.id}" style="color:inherit;text-decoration:underline">${esc(u.deal.name)}</a>`:esc(u.deal.name)}${u.rating?` · ${stars(u.rating)}`:''}</li>`).join('')}</ul></details></td>
+        <td class="num whitespace-nowrap">${dfmt(f.last)}</td>
+        <td class="whitespace-nowrap">${f.ratings?`<span style="color:var(--warn);letter-spacing:1px" aria-label="${f.rating.toFixed(1)} out of 5">${stars(f.rating)}</span> <span class="hint">${f.rating.toFixed(1)} · ${f.ratings} rating${f.ratings>1?'s':''}</span>`:'<span class="hint">Not rated</span>'}</td>
+        ${showFees?`<td class="r num">${money(f.fees)}${f.absorbed?`<div class="hint" style="font-size:11.5px">${money(f.absorbed)} absorbed by us</div>`:''}</td>`:''}</tr>`).join('')}</tbody></table></div></div>`
+      :'<div class="card p-8 text-center"><p class="serif text-[20px]">No firms match</p><p class="hint">Try another name or jurisdiction.</p></div>';
+  };
+  app.innerHTML=`<div class="fade-in">
+    <div class="mb-6"><p class="eyebrow mb-2">Firm data</p><h1 class="text-[34px] md:text-[44px]">Local counsel</h1>
+      <p class="hint mt-2 max-w-[72ch]" style="font-size:15px">Every firm we've instructed, built from deal sheets. Ratings come from the deal team's "How did they do?" score on each deal.</p></div>
+    <div class="card p-4 md:p-5 mb-5 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
+      <label class="field"><span>Search</span><input class="input" type="search" id="lcQ" value="${esc(LF.q)}" placeholder="Firm, lawyer or jurisdiction"></label>
+      <label class="field"><span>Jurisdiction</span><select class="input" id="lcJ"><option value="">All</option>${js.map(j=>`<option ${LF.j===j?'selected':''}>${esc(j)}</option>`).join('')}</select></label>
+    </div><div id="lcResults"></div></div>`;
+  $('#lcQ').oninput=e=>{LF.q=e.target.value;draw()}; $('#lcJ').onchange=e=>{LF.j=e.target.value;draw()}; draw();
+}
+
+/* ================= DIRECTORY SUBMISSION PACK (BD) ================= */
+let DF={practice:'',period:'12m'};
+function renderDirectory(app){
+  const all=registerDeals(), practices=[...new Set(all.map(d=>d.practice))].sort(), years=[...new Set(all.map(year))].sort().reverse();
+  if(!DF.practice){ const cutoff=new Date(Date.now()-365*864e5).toISOString().slice(0,10); DF.practice=[...practices].sort((a,b)=>all.filter(d=>d.practice===b&&d.completed>=cutoff).length-all.filter(d=>d.practice===a&&d.completed>=cutoff).length)[0]||'' }
+  const from=DF.period==='12m'?new Date(Date.now()-365*864e5).toISOString().slice(0,10):DF.period+'-01-01', to=DF.period==='12m'?today():DF.period+'-12-31';
+  const inScope=all.filter(d=>d.practice===DF.practice&&d.completed>=from&&d.completed<=to);
+  const order={public:0,anonymised:1,confidential:2};
+  const picked=[...inScope].sort((a,b)=>(order[a.referable]??1)-(order[b.referable]??1)||b.completed.localeCompare(a.completed));
+  const pub=picked.filter(d=>d.referable!=='confidential'), conf=picked.filter(d=>d.referable==='confidential');
+  const referees=picked.flatMap(d=>(d.contacts||[]).filter(c=>c.referee).map(c=>({...c,company:d.client?.name,deal:d.name})));
+  const uniqRefs=[...new Map(referees.map(r=>[(r.email||r.name).toLowerCase(),r])).values()];
+  const clientName=d=>d.referable==='anonymised'?`Undisclosed ${String(d.client?.sector||'').toLowerCase()} client`:d.client?.name;
+  const heading=(d,i)=>`Work highlight ${i+1}: ${d.referable==='anonymised'?(d.type||'Deal')+' for an undisclosed client':d.name}`;
+  const others=d=>(d.team||[]).filter(t=>t.name!==d.leadPartner&&t.role!=='Paralegal').map(t=>t.name);
+  const fields=d=>[['Client',clientName(d)],['Summary',blurbParas(d).slice(0,-1).join(' ')],['Deal value',n(d.value)?moneyC(n(d.value),d.valueCcy||'USD'):'Not disclosed'],['Cross-border',(d.jurisdictions||'').includes(',')?'Yes: '+d.jurisdictions:'No'],['Lead partner',d.leadPartner],['Other team members',list(others(d))||'–'],['Date completed',mfmt(d.completed)],['Other firms advising',[d.opposingCounsel,...(d.localCounsel||[]).map(l=>`${l.firm} (local counsel, ${l.jurisdiction})`)].filter(Boolean).join('; ')||'–']];
+  const periodLabel=DF.period==='12m'?'the last 12 months':DF.period;
+  app.innerHTML=`<div class="fade-in">
+    <div class="mb-6"><p class="eyebrow mb-2">Firm data</p><h1 class="text-[34px] md:text-[44px]">Directory submissions</h1>
+      <p class="hint mt-2 max-w-[74ch]" style="font-size:15px">Build the work highlights and referee list for a Chambers or Legal 500 submission. Publishable deals come first. Anonymised deals are described without naming the client. Confidential deals are included but marked, for the directory's confidential section, which researchers don't publish.</p></div>
+    <div class="card p-4 md:p-5 mb-5 flex flex-wrap items-end gap-3">
+      <label class="field" style="min-width:220px"><span>Practice area</span><select class="input" id="dfP">${practices.map(pr=>`<option ${DF.practice===pr?'selected':''}>${esc(pr)}</option>`).join('')}</select></label>
+      <label class="field" style="min-width:180px"><span>Period</span><select class="input" id="dfY"><option value="12m" ${DF.period==='12m'?'selected':''}>Last 12 months</option>${years.map(y=>`<option value="${y}" ${DF.period===y?'selected':''}>${y}</option>`).join('')}</select></label>
+      <div class="flex flex-wrap gap-2 ml-auto"><button class="btn btn-ghost" id="dfCopy" ${picked.length?'':'disabled'}>Copy all</button><button class="btn btn-ghost" id="dfRefs" ${uniqRefs.length?'':'disabled'}>Download referees (CSV)</button><button class="btn btn-primary" id="dfWord" ${picked.length?'':'disabled'}>Download for Word</button></div>
+    </div>
+    <p class="hint mb-4">${picked.length} work highlight${picked.length===1?'':'s'} for ${esc(DF.practice)} in ${esc(periodLabel)}: ${pub.length} publishable, ${conf.length} confidential · ${uniqRefs.length} referee${uniqRefs.length===1?'':'s'}</p>
+    ${picked.length?[['Publishable work highlights',pub,0],['Confidential work highlights',conf,pub.length]].filter(g=>g[1].length).map(([title,ds,off])=>`<h2 class="text-[24px] mb-1">${title}</h2>${ds===conf?'<p class="hint mb-4">Marked confidential. Submit these in the directory\'s confidential section only; researchers use them for ranking but don\'t publish them.</p>':'<div class="mb-4"></div>'}
+      <div class="flex flex-col gap-4 mb-10">${ds.map((d,i)=>`<article class="card-raised p-5 md:p-6" ${d.referable==='confidential'?'style="border-color:#EBC3CF"':''}><div class="flex flex-wrap items-baseline justify-between gap-2 mb-3"><h3 class="text-[20px]">${esc(heading(d,i+off))}</h3><span class="pill ${d.referable==='public'?'pill-gain':d.referable==='confidential'?'pill-loss':'pill-warn'}">${d.referable==='confidential'?'Confidential: not for publication':REFERABLE[d.referable]}</span></div>
+      <dl class="kv" style="grid-template-columns:minmax(120px,190px) 1fr">${fields(d).map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl></article>`).join('')}</div>`).join('')
+      :`<div class="card p-8 text-center mb-10"><p class="serif text-[20px]">No deals to include</p><p class="hint">Try another practice area or period.</p></div>`}
+    <h2 class="text-[24px] mb-4">Referees</h2>
+    ${uniqRefs.length?`<div class="card-raised overflow-x-auto"><table class="data"><thead><tr><th>Name</th><th>Position</th><th>Company</th><th>Email</th><th>Phone</th></tr></thead><tbody>${uniqRefs.map(r=>`<tr><td class="font-semibold">${esc(r.name)}</td><td>${esc(r.title||'–')}</td><td>${esc(r.company)}</td><td class="mono" style="font-size:13px">${esc(r.email||'–')}</td><td class="mono" style="font-size:13px">${esc(r.phone||'–')}</td></tr>`).join('')}</tbody></table></div>`
+      :'<p class="hint">No client contacts on these deals agreed to be referees. Ask the lead partners.</p>'}
+  </div>`;
+  $('#dfP').onchange=e=>{DF.practice=e.target.value;renderDirectory(app)};
+  $('#dfY').onchange=e=>{DF.period=e.target.value;renderDirectory(app)};
+  const fileName=ext=>`${DF.practice.replace(/[^A-Za-z]+/g,'-')}-directory-${DF.period}.${ext}`;
+  const download=(content,type,name)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click()};
+  $('#dfCopy').onclick=()=>{const txt=picked.map((d,i)=>`${heading(d,i)}${d.referable==='confidential'?' [CONFIDENTIAL: NOT FOR PUBLICATION]':''}\n`+fields(d).map(([k,v])=>`${k}: ${v}`).join('\n')).join('\n\n');navigator.clipboard?.writeText(txt).then(()=>toast('Work highlights copied'),()=>toast('Select the text to copy it'))};
+  $('#dfWord').onclick=()=>{
+    const html=`<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:11pt}h1{font-size:16pt}h2{font-size:13pt;margin-top:18pt}td{vertical-align:top;padding:3pt 6pt;border:1px solid #ccc}th{text-align:left;padding:3pt 6pt;background:#eee;border:1px solid #ccc}table{border-collapse:collapse;width:100%}</style></head><body>
+      <h1>${esc(DF.practice)}: work highlights, ${esc(periodLabel)}</h1>
+      ${picked.map((d,i)=>`${i===pub.length&&conf.length?'<h1>Confidential work highlights (not for publication)</h1>':''}<h2>${esc(heading(d,i))}${d.referable==='confidential'?' <span style="color:#B3264C">[CONFIDENTIAL]</span>':''}</h2><table>${fields(d).map(([k,v])=>`<tr><th style="width:28%">${k}</th><td>${esc(v)}</td></tr>`).join('')}</table>`).join('')}
+      <h2>Referees</h2><table><tr><th>Name</th><th>Position</th><th>Company</th><th>Email</th><th>Phone</th></tr>${uniqRefs.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.title||'')}</td><td>${esc(r.company)}</td><td>${esc(r.email||'')}</td><td>${esc(r.phone||'')}</td></tr>`).join('')}</table></body></html>`;
+    download(html,'application/msword',fileName('doc')); toast('Downloaded for Word');
+  };
+  $('#dfRefs').onclick=()=>{const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;download(['Name,Position,Company,Email,Phone',...uniqRefs.map(r=>[r.name,r.title,r.company,r.email,r.phone].map(q).join(','))].join('\n'),'text/csv',fileName('csv'));toast(`Downloaded ${uniqRefs.length} referees`)};
+}
+
+/* ================= ACTIVITY LOG (practice manager) ================= */
+let AF={type:'',who:''};
+const AUDIT_TYPES={access:'Access and people',cost:'Costs to the firm',origination:'Origination credits',correction:'Corrections',dealsheet:'Deal sheets'};
+function renderActivity(app){
+  const dealEvents=deals.flatMap(d=>(d.history||[]).filter(h=>['submitted','approved','returned','nudged','corrected'].includes(h.action)&&h.action!=='corrected').map(h=>({at:h.at,by:h.by,type:'dealsheet',text:({submitted:`Sent “${d.name||'Untitled deal'}” to ${nameOf(h.to)} for review`,approved:`Approved “${d.name}” into the register`,returned:`Returned “${d.name}” to ${nameOf(d.preparedBy)}${h.note?`: “${h.note}”`:''}`,nudged:`Sent ${nameOf(h.to)} a reminder about “${d.name}”`})[h.action]})));
+  const all=[...AUDIT,...dealEvents].sort((a,b)=>b.at.localeCompare(a.at));
+  const people=[...new Set(all.map(e=>e.by).filter(Boolean))].map(id=>userById(id)).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
+  const rows=all.filter(e=>(!AF.type||e.type===AF.type)&&(!AF.who||e.by===AF.who)).slice(0,200);
+  app.innerHTML=`<div class="fade-in">
+    <div class="mb-6"><p class="eyebrow mb-2">Admin</p><h1 class="text-[34px] md:text-[44px]">Activity log</h1>
+      <p class="hint mt-2 max-w-[74ch]" style="font-size:15px">Who changed access, costs, origination credits or approved deals, and when. Origination figures aren't shown here; only the managing partner can see them.</p></div>
+    <div class="card p-4 md:p-5 mb-5 flex flex-wrap gap-3">
+      <label class="field" style="min-width:220px"><span>Type</span><select class="input" id="afT"><option value="">Everything</option>${Object.entries(AUDIT_TYPES).map(([k,v])=>`<option value="${k}" ${AF.type===k?'selected':''}>${v}</option>`).join('')}</select></label>
+      <label class="field" style="min-width:220px"><span>Person</span><select class="input" id="afW"><option value="">Everyone</option>${people.map(u=>`<option value="${u.id}" ${AF.who===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}</select></label>
+    </div>
+    ${rows.length?`<div class="card-raised overflow-hidden"><div class="overflow-x-auto"><table class="data"><thead><tr><th>When</th><th>Who</th><th>Type</th><th>What happened</th></tr></thead><tbody>
+      ${rows.map(e=>`<tr><td class="num whitespace-nowrap">${dfmt(e.at)}<div class="hint">${new Date(e.at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div></td><td class="whitespace-nowrap">${esc(nameOf(e.by))}</td><td><span class="pill pill-neutral">${AUDIT_TYPES[e.type]||e.type}</span></td><td style="min-width:320px">${esc(e.text)}</td></tr>`).join('')}</tbody></table></div></div>`
+      :'<div class="card p-8 text-center"><p class="serif text-[20px]">Nothing logged yet</p><p class="hint">Changes will appear here as people use the system.</p></div>'}
+  </div>`;
+  $('#afT').onchange=e=>{AF.type=e.target.value;renderActivity(app)}; $('#afW').onchange=e=>{AF.who=e.target.value;renderActivity(app)};
+}
+
+/* ================= ORIGINATION CREDITS (managing partner only) ================= */
+function renderOrigination(app){
+  if(!canOriginate()){ location.hash=cfg().home; return }
+  const all=registerDeals().sort((a,b)=>(needsCredit(b)-needsCredit(a))||(b.approvedAt||'').localeCompare(a.approvedAt||''));
+  const pending=all.filter(needsCredit);
+  const byPerson={};
+  all.forEach(d=>creditSplit(d).forEach(l=>{const p=(byPerson[l.name]??={deals:0,credit:0});p.deals++;p.credit+=calc(d).bill*n(l.pct)/100}));
+  const people=Object.entries(byPerson).map(([k,v])=>({k,...v})).sort((a,b)=>b.credit-a.credit);
+  const lineHTML=(l={})=>`<div class="flex items-center gap-2 mb-2" data-line>
+      <select class="input" style="min-width:0;flex:1" data-person aria-label="Person credited"><option value="">Choose a person</option>${feeEarners().map(u=>`<option value="${esc(u.name)}" ${u.name===l.name?'selected':''}>${esc(u.name)}</option>`).join('')}</select>
+      <input class="input num" style="width:72px;flex:none" type="number" min="0" max="100" step="1" inputmode="decimal" data-pct value="${esc(l.pct??'')}" aria-label="Percentage"><span class="hint">%</span>
+      <button type="button" class="btn btn-quiet" style="padding:6px 8px" data-remove-line aria-label="Remove this person">✕</button></div>`;
+  app.innerHTML=`<div class="fade-in">
+    <div class="mb-6"><p class="eyebrow mb-2">Managing partner only</p><h1 class="text-[34px] md:text-[44px]">Origination credits</h1>
+      <p class="hint mt-2 max-w-[72ch]" style="font-size:15px">Every deal sheet approved by a reviewing partner appears here. Credit one or more people with a share of the deal's fees; shares can't add up to more than 100%. Only you can see or change these figures.</p></div>
+    <div class="card-raised grid grid-cols-2 md:grid-cols-3 mb-8 overflow-hidden">
+      <div class="stat"><div class="eyebrow">Waiting for a credit</div><div class="v ${pending.length?'warn':''}">${pending.length}</div><div class="s">approved deals</div></div>
+      <div class="stat"><div class="eyebrow">Complete</div><div class="v">${all.length-pending.length}</div><div class="s">of ${all.length} deals</div></div>
+      <div class="stat"><div class="eyebrow">Credited fees</div><div class="v">${money(sum(people,p=>p.credit))}</div><div class="s">across ${people.length} ${people.length===1?'person':'people'}</div></div>
+    </div>
+    <div class="card-raised overflow-hidden mb-10"><div class="overflow-x-auto"><table class="data" id="creditTable">
+      <thead><tr><th>Deal and client</th><th>Completed</th><th>Originated by</th><th class="r">Fees billed</th><th style="min-width:330px">Credit split</th><th class="r">Credited fees</th><th></th></tr></thead>
+      <tbody>${all.map(d=>{const lines=creditSplit(d).length?creditSplit(d):[{name:d.originator}];return `<tr data-id="${d.id}">
+        <td style="min-width:220px"><a href="#deal/${d.id}" class="font-semibold" style="color:inherit;line-height:1.4">${esc(d.name)}</a><div class="hint">${esc(d.client?.name)}${d.matter?' · <span class="mono">'+esc(d.matter)+'</span>':''}</div><div class="hint">Lead partner: ${esc(d.leadPartner)}</div></td>
+        <td class="num whitespace-nowrap">${dfmt(d.completed)}</td>
+        <td class="whitespace-nowrap">${esc(d.originator||'–')}</td>
+        <td class="r num">${money(calc(d).bill)}</td>
+        <td><div data-lines>${lines.map(lineHTML).join('')}</div>
+          <div class="flex items-center justify-between gap-2"><button type="button" class="btn btn-quiet" style="padding-left:0" data-add-line>+ Add person</button><span class="hint num" data-total></span></div></td>
+        <td class="r num whitespace-nowrap" data-credit></td>
+        <td class="r whitespace-nowrap">${needsCredit(d)?'<span class="pill pill-warn">Needs credit</span>':'<span class="pill pill-gain">Complete</span>'}</td>
+      </tr>`}).join('')}</tbody></table></div>
+      <div class="flex flex-wrap items-center gap-3 p-4 border-t" style="border-color:var(--line-2);background:var(--surface)"><p class="err" id="origErr" role="alert"></p><button class="btn btn-primary ml-auto" id="saveCredits">Save credits</button></div>
+    </div>
+    ${people.length?`<h2 class="text-[26px] mb-1">Origination by person</h2><p class="hint mb-4">Credited fees across all deals with a credit entered.</p>
+    <div class="card-raised overflow-x-auto"><table class="data"><thead><tr><th>Person</th><th class="r">Deals credited</th><th class="r">Credited fees</th></tr></thead>
+      <tbody>${people.map(p=>`<tr><td class="font-semibold">${esc(p.k)}</td><td class="r num">${p.deals}</td><td class="r num">${money(p.credit)}</td></tr>`).join('')}</tbody></table></div>`:''}
+  </div>`;
+  // A line only counts once it has a percentage; the originator is pre-selected on untouched rows.
+  const readLines=tr=>$$('[data-line]',tr).map(el=>({el,name:$('[data-person]',el).value,pct:$('[data-pct]',el).value.trim()}));
+  const updateRow=tr=>{
+    const d=deals.find(x=>x.id===tr.dataset.id), lines=readLines(tr).filter(l=>l.pct!=='');
+    const total=sum(lines,l=>n(l.pct));
+    const t=$('[data-total]',tr); t.textContent=lines.length?`Total ${hrs(total)}%`:''; t.style.color=total>100?'var(--tape-deep)':'';
+    $('[data-credit]',tr).innerHTML=lines.filter(l=>l.pct!=='').map(l=>money(calc(d).bill*n(l.pct)/100)).join('<br>')||'–';
+  };
+  const table=$('#creditTable');
+  $$('tbody tr',table).forEach(updateRow);
+  table.addEventListener('input',e=>{const tr=e.target.closest('tr[data-id]'); if(tr) updateRow(tr)});
+  table.addEventListener('change',e=>{const tr=e.target.closest('tr[data-id]'); if(tr) updateRow(tr)});
+  table.addEventListener('click',e=>{
+    const tr=e.target.closest('tr[data-id]'); if(!tr) return;
+    if(e.target.closest('[data-add-line]')){ $('[data-lines]',tr).insertAdjacentHTML('beforeend',lineHTML()); $('[data-line]:last-child [data-person]',tr).focus(); updateRow(tr) }
+    const rm=e.target.closest('[data-remove-line]');
+    if(rm){ const box=$('[data-lines]',tr); if(box.children.length>1) rm.closest('[data-line]').remove(); else { $('[data-person]',box).value=''; $('[data-pct]',box).value='' } updateRow(tr) }
+  });
+  $('#saveCredits').onclick=()=>{
+    $$('[aria-invalid]',table).forEach(i=>i.removeAttribute('aria-invalid'));
+    const problems=[], updates=[];
+    $$('tbody tr[data-id]',table).forEach(tr=>{
+      const d=deals.find(x=>x.id===tr.dataset.id), lines=readLines(tr).filter(l=>l.pct!=='');
+      let bad=false; const seen=new Set();
+      lines.forEach(l=>{
+        if(!l.name){$('[data-person]',l.el).setAttribute('aria-invalid','true');bad=true}
+        if(!(n(l.pct)>=0&&n(l.pct)<=100)){$('[data-pct]',l.el).setAttribute('aria-invalid','true');bad=true}
+        if(l.name&&seen.has(l.name)){$('[data-person]',l.el).setAttribute('aria-invalid','true');bad=true} seen.add(l.name);
+      });
+      if(sum(lines,l=>n(l.pct))>100){lines.forEach(l=>$('[data-pct]',l.el).setAttribute('aria-invalid','true'));bad=true}
+      if(bad){problems.push(d.name);return}
+      const split=lines.map(l=>({name:l.name,pct:String(n(l.pct))}));
+      if(JSON.stringify(split)!==JSON.stringify(creditSplit(d))) updates.push([d,split]);
+    });
+    if(problems.length){$('#origErr').textContent=`Check ${list(problems.slice(0,2))}${problems.length>2?` and ${problems.length-2} more`:''}: each share needs a person and must be 0–100%, no one twice, and no more than 100% in total.`;table.querySelector('[aria-invalid]').focus();return}
+    const now=new Date().toISOString(), user=me();
+    updates.forEach(([d,split])=>{ if(split.length) d.originationSplit=split; else delete d.originationSplit; delete d.originationPct; d.originationSetBy=user.id; d.originationAt=now; });
+    if(updates.length) audit('origination',`Updated origination credits on ${updates.length} deal${updates.length>1?'s':''}: ${updates.map(([d])=>d.name).join('; ')}`);
+    save(); toast(updates.length?`Saved origination credits for ${updates.length} deal${updates.length>1?'s':''}`:'No changes to save'); renderTopbar(user,'origination'); renderOrigination(app);
+  };
+}
+
+/* ================= DEAL DETAIL ================= */
+function renderDeal(app,d){
+  const lens=curLens(), lenses=cfg().lenses;
+  if(!d){app.innerHTML=`<div class="card p-10 text-center"><p class="serif text-[22px] mb-2">This deal isn't in the register</p><p class="hint mb-4">It may not have been approved yet.</p><a class="btn btn-primary" href="#register">Back to the register</a></div>`;return}
+  const c=calc(d);
+  const panels={finance:financePanel,mp:(d,c)=>overviewPanel(d,c,true),bd:bdPanel,partner:(d,c)=>overviewPanel(d,c,false)};
+  app.innerHTML=`<div class="fade-in">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3"><a href="#register" class="btn btn-quiet" style="padding-left:0">← Deal register</a>${canCorrect()?`<a class="btn btn-ghost" href="#correct/${d.id}">Correct this deal</a>`:''}</div>
+    <div class="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-8 items-start">
+      <div class="xl:sticky xl:top-8 max-w-[520px]">
+        <div class="tomb-wrap">${tombstone(d,true)}</div>
+        <dl class="kv mt-8 px-1">
+          <dt>Matter</dt><dd class="mono">${esc(d.matter||'–')}</dd>
+          <dt>Originated by</dt><dd>${esc(d.originator||'–')}</dd>
+          <dt>Lead partner</dt><dd>${esc(d.leadPartner)}</dd>
+          <dt>Deal type</dt><dd>${esc(d.type)}</dd>
+          <dt>Sector</dt><dd>${esc(d.client?.sector||'–')}</dd>
+          <dt>Prepared by</dt><dd>${esc(nameOf(d.preparedBy))}</dd>
+          <dt>Approved by</dt><dd>${esc(nameOf(d.approvedBy))}, ${dfmt(d.approvedAt)}</dd>
+          ${canOriginate()?`<dt>Origination credit</dt><dd>${needsCredit(d)?'<a href="#origination" class="pill pill-warn" style="text-decoration:none">Not set yet</a>':creditSplit(d).map(l=>esc(l.name)+' '+n(l.pct)+'%').join('<br>')}</dd>`:''}
+        </dl>
+        ${(d.corrections||[]).length?`<div class="card p-4 mt-6"><p class="eyebrow mb-3">Corrections after approval</p><ol class="timeline">${[...d.corrections].reverse().map(x=>`<li class="returned"><strong>${esc(nameOf(x.by))}</strong> · ${dfmt(x.at)}<div class="hint">${esc(x.changes.join(', '))}</div><div class="hint">“${esc(x.reason)}”</div></li>`).join('')}</ol></div>`:''}
+      </div>
+      <div class="card-raised min-w-0">
+        <div class="tabs px-4" role="tablist">${lenses.map(k=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${k===lens}">${LENS_NAMES[k]}</button>`).join('')}</div>
+        <div class="p-5 md:p-8" id="panel"></div>
+      </div>
+    </div></div>`;
+  const show=k=>{
+    $$('[data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===k));
+    $('#panel').innerHTML=`<div class="fade-in">${panels[k](d,c)}</div>`;
+    const cp=$('#copyBlurb'); if(cp) cp.onclick=()=>{navigator.clipboard?.writeText($('#blurb').innerText).then(()=>toast('Summary copied'),()=>toast('Select the text to copy it'))};
+  };
+  $$('[data-tab]').forEach(b=>b.onclick=()=>{store.set(LKEY,b.dataset.tab);show(b.dataset.tab)});
+  show(lens);
+}
+const figure=(label,val,cls='',sub='')=>`<div class="card p-4"><div class="eyebrow">${label}</div><div class="serif mt-1 ${cls}" style="font-size:clamp(19px,2.2vw,26px);letter-spacing:-.03em;line-height:1.2;overflow-wrap:break-word">${val}</div>${sub?`<div class="hint mt-1">${sub}</div>`:''}</div>`;
+function financePanel(d,c){
+  const team=d.team||[];
+  return `<div class="grid grid-cols-2 gap-3 mb-8">
+      ${figure('Quoted',c.quote?money(c.quote):'–',c.quote>0&&c.bill<c.quote?'warn':'',c.quote?(c.bill<c.quote?`Billed ${money(c.quote-c.bill)} under quote`:'Billed '+pct(c.bill/c.quote)+' of quote'):'No quote given')}
+      ${figure('WIP',money(c.wip),'',`${hrs(c.hours)} hours`)}${figure('Billed',money(c.bill),'',esc(d.fee?.arrangement||''))}
+      ${figure('Written off',money(c.writeOff),c.writeOff?'warn':'',c.wip?pct(c.writeOff/c.wip)+' of WIP':'')}
+      ${figure('Realisation',pct(c.realisation),'', 'billed ÷ WIP')}${figure('Estimated margin',money(c.margin),c.margin<0?'loss':'gain',pct(c.marginPct)+' of fees')}
+      ${figure('Disbursements',n(d.fee?.disbursements)?money(n(d.fee.disbursements)):'–','','billed to client')}
+      ${figure('Payment',esc(d.fee?.paid||'–'),'',d.fee?.invoiceDate?'Invoiced '+dfmt(d.fee.invoiceDate):'')}
+    </div>
+    ${c.writeOff?`<h3 class="text-[20px] mb-3">Why WIP was written off</h3>
+      <div class="flex flex-wrap gap-2 mb-3">${(d.fee?.writeoffReasons||[]).map(r=>`<span class="pill pill-warn">${esc(r)}</span>`).join('')||'<span class="pill pill-loss">No reason given</span>'}</div>
+      ${d.fee?.writeoffNote?`<p class="mb-2" style="max-width:68ch">${esc(d.fee.writeoffNote)}</p>`:''}
+      <p class="hint mb-8">${d.fee?.approvedBy?'Write-off approved by '+esc(d.fee.approvedBy):'No write-off approver recorded'}</p>`:''}
+    <h3 class="text-[20px] mb-3">Cost of the deal</h3>
+    <div class="overflow-x-auto mb-2"><table class="data"><thead><tr><th>Item</th><th class="r">Hours</th><th class="r">Billed value</th><th class="r">Cost</th></tr></thead><tbody>
+      ${team.map(m=>`<tr><td>${esc(m.name)} <span class="hint">· ${esc(m.role)}</span></td><td class="r num">${hrs(n(m.hours))}</td><td class="r num">${money(n(m.hours)*n(m.rate))}</td><td class="r num">${money(n(m.hours)*memberCost(m,d))}<div class="hint" style="font-size:11px">${money(memberCost(m,d))}/hr</div></td></tr>`).join('')}
+      ${(d.localCounsel||[]).map(l=>`<tr><td>${esc(l.firm)} <span class="hint">· local counsel, ${l.recharged?'recharged to client':'absorbed by us'}</span></td><td class="r">–</td><td class="r">–</td><td class="r num">${l.recharged?'–':money(n(l.fees))}</td></tr>`).join('')}
+      <tr><td class="font-semibold">Total</td><td class="r num font-semibold">${hrs(c.hours)}</td><td class="r num font-semibold">${money(c.suggestedWip)}</td><td class="r num font-semibold">${money(c.teamCost+c.lcCost)}</td></tr>
+    </tbody></table></div>
+    <p class="hint">Cost uses each person's cost to the firm per hour in force on the completion date, fixed when the deal was approved. Where no personal cost is set, the grade's standard cost is used. Margin = fees billed − team cost − local counsel fees we absorbed.</p>`;
+}
+function overviewPanel(d,c,withFees){
+  const team=[...(d.team||[])].sort((a,b)=>n(b.hours)-n(a.hours));
+  return `<div class="grid grid-cols-2 gap-3 mb-8">
+      ${figure('Deal value',n(d.value)?moneyC(n(d.value),d.valueCcy||'USD'):'–')}${figure('Days to close',c.days??'–','',d.instructed?'From instruction to completion':'')}
+      ${withFees?figure('Fees billed',money(c.bill),'',pct(c.realisation)+' realisation'):figure('Hours',hrs(c.hours),'','recorded by the team')}
+      ${figure('Client',esc(d.client?.status||'–'),'',esc(d.client?.origination||''))}${figure('Team',String(team.length),'',withFees?`${hrs(c.hours)} hours`:'Led by '+esc(d.leadPartner))}
+      ${withFees?figure('Margin',pct(c.marginPct),c.margin<0?'loss':'gain',money(c.margin)):figure('Jurisdictions',String((d.jurisdictions||'').split(',').filter(s=>s.trim()).length||'–'),'',esc(d.jurisdictions||''))}
+    </div>
+    <h3 class="text-[20px] mb-3">Key dates</h3>
+    <dl class="kv mb-8"><dt>Date of instruction</dt><dd>${dfmt(d.instructed)}</dd><dt>Signing date</dt><dd>${dfmt(d.signed)}</dd><dt>Completion date</dt><dd>${dfmt(d.completed)}</dd></dl>
+    <h3 class="text-[20px] mb-3">Who did the work</h3>
+    <div class="flex flex-col gap-3 mb-8">${team.map(m=>`<div class="grid grid-cols-[minmax(0,1fr)_70px] md:grid-cols-[220px_minmax(0,1fr)_70px] gap-x-4 gap-y-1 items-center">
+      <div><span class="font-semibold">${esc(m.name)}</span> <span class="hint">· ${esc(m.role)}</span></div>
+      <div class="meter order-3 md:order-none col-span-2 md:col-span-1" aria-hidden="true"><i style="width:${c.hours?n(m.hours)/c.hours*100:0}%;background:${m.role==='Partner'?'var(--tape)':'var(--ink-2)'}"></i></div>
+      <div class="num text-right">${hrs(n(m.hours))}h</div></div>`).join('')}</div>
+    <h3 class="text-[20px] mb-3">About the deal</h3>
+    <dl class="kv mb-6">
+      <dt>Client name</dt><dd>${esc(d.client?.name)}${d.client?.country?' · '+esc(d.client.country):''}</dd>
+      <dt>Client</dt><dd>${esc(d.actingFor||'–')}</dd>
+      <dt>Relationship partner</dt><dd>${esc(d.client?.relationshipPartner||'–')}</dd>
+      <dt>Jurisdictions</dt><dd>${esc(d.jurisdictions||'–')}</dd>
+      <dt>Counterparties</dt><dd>${esc(d.counterparties||'–')}</dd>
+      <dt>Counsel to other parties</dt><dd>${esc(d.opposingCounsel||'–')}</dd>
+      <dt>Local counsel</dt><dd>${(d.localCounsel||[]).map(l=>esc(l.firm)+' ('+esc(l.jurisdiction)+')').join(', ')||'–'}</dd>
+    </dl>
+    ${d.description?`<p style="max-width:68ch">${esc(d.description)}</p>`:''}
+    ${d.notable?`<h3 class="text-[20px] mt-8 mb-3">Notable or unique aspects</h3><p style="max-width:68ch">${esc(d.notable)}</p>`:''}`;
+}
+function dealPhrase(name){
+  // "Acquisition of X" -> "the acquisition of X"; keep acronyms, figures and proper nouns as written
+  const first=name.split(' ')[0];
+  const lower=/^[A-Z][a-z-]+$/.test(first)&&first!=='Series'?name.charAt(0).toLowerCase()+name.slice(1):name;
+  return 'the '+lower;
+}
+// The directory write-up for a deal, as plain paragraphs (used on the BD tab and in the submission pack)
+function blurbParas(d){
+  const team=d.team||[];
+  const partners=team.filter(t=>t.role==='Partner').map(t=>t.name), others=team.filter(t=>t.role!=='Partner'&&t.role!=='Paralegal').map(t=>t.name);
+  const v=n(d.value)?new Intl.NumberFormat('en-GB',{style:'currency',currency:d.valueCcy||'USD',notation:'compact',maximumFractionDigits:1}).format(n(d.value)):'';
+  return [
+    `Advised ${d.referable==='public'?d.client?.name:'a '+(d.client?.sector||'').toLowerCase()+' client'}${d.actingFor?' ('+d.actingFor+')':''} on ${d.referable==='public'?dealPhrase(d.name):'a '+(d.type||'').toLowerCase()}${v?', valued at '+v:''}, completed ${mfmt(d.completed)}.`,
+    d.description, d.significance, d.notable,
+    `The team was led by ${list(partners.length?partners:[d.leadPartner])}${others.length?`, with ${list(others)}`:''}.${(d.localCounsel||[]).length?` Local counsel: ${list(d.localCounsel.map(l=>`${l.firm} (${l.jurisdiction})`))}.`:''}${d.opposingCounsel?` Other parties were advised by ${d.opposingCounsel}.`:''}`
+  ].filter(Boolean);
+}
+function bdPanel(d,c){
+  const team=d.team||[];
+  const partners=team.filter(t=>t.role==='Partner').map(t=>t.name), others=team.filter(t=>t.role!=='Partner'&&t.role!=='Paralegal').map(t=>t.name);
+  const v=n(d.value)?new Intl.NumberFormat('en-GB',{style:'currency',currency:d.valueCcy||'USD',notation:'compact',maximumFractionDigits:1}).format(n(d.value)):'';
+  return `<div class="flex flex-wrap gap-2 items-center mb-6">
+      <span class="pill ${d.referable==='public'?'pill-gain':d.referable==='confidential'?'pill-loss':'pill-warn'}">${esc(REFERABLE[d.referable]||'Naming not recorded')}</span>
+      ${d.referable!=='public'?`<span class="hint">${d.referable==='confidential'?'Leave client and deal names out of submissions.':'Describe this deal without naming the client.'}</span>`:''}
+    </div>
+    <div class="flex items-baseline justify-between gap-3 mb-3"><h3 class="text-[20px]">Directory summary</h3><button class="btn btn-ghost" id="copyBlurb">Copy summary</button></div>
+    <div class="card p-5 mb-8" id="blurb" style="max-width:72ch">
+      ${blurbParas(d).map((t,i,a)=>`<p class="${i<a.length-1?'mb-3':''}">${esc(t)}</p>`).join('')}
+    </div>
+    <h3 class="text-[20px] mb-3">Client contacts</h3>
+    ${(d.contacts||[]).length?`<div class="overflow-x-auto mb-8"><table class="data"><thead><tr><th>Name</th><th>Title</th><th>Email</th><th>Phone</th><th>Referee</th></tr></thead><tbody>
+      ${d.contacts.map(x=>`<tr><td class="font-semibold">${esc(x.name)}</td><td>${esc(x.title)}</td><td class="mono" style="font-size:13px">${esc(x.email||'–')}</td><td class="mono" style="font-size:13px">${esc(x.phone||'–')}</td><td>${x.referee?'<span class="pill pill-gain">Willing</span>':'<span class="hint">No</span>'}</td></tr>`).join('')}
+    </tbody></table></div>`:'<p class="hint mb-8">No client contacts recorded. Ask the lead partner for a referee.</p>'}
+    <dl class="kv">
+      <dt>Practice area</dt><dd>${esc(d.practice)}</dd><dt>Notable aspects</dt><dd>${esc(d.notable||'–')}</dd><dt>Signing date</dt><dd>${dfmt(d.signed)}</dd><dt>Completion date</dt><dd>${dfmt(d.completed)}</dd>
+      <dt>Jurisdictions</dt><dd>${esc(d.jurisdictions||'–')}</dd>
+      <dt>Counterparties</dt><dd>${esc(d.counterparties||'–')}</dd><dt>Counsel to other parties</dt><dd>${esc(d.opposingCounsel||'–')}</dd>
+      <dt>Local counsel lawyers</dt><dd>${(d.localCounsel||[]).map(l=>`${esc(l.lawyers)} <span class="hint">(${esc(l.firm)})</span>`).join('<br>')||'–'}</dd>
+    </dl>`;
+}
+
+/* ================= SAMPLE DATA ================= */
+function seed(){
+  const T=(name,role,hours,rate)=>({name,role,hours:String(hours),rate:String(rate??ROLES[role].rate)});
+  const D=[
+    {matter:'HC-0412',name:'Acquisition of Coastline Logistics by Harbour Capital',practice:'Corporate M&A',type:'Acquisition',actingFor:'the purchaser',instructed:'2025-01-14',signed:'2025-05-02',completed:'2025-06-30',value:'240000000',valueCcy:'USD',jurisdictions:'Nigeria, Ghana, England',
+     counterparties:'Coastline Holdings Ltd; founding shareholders',opposingCounsel:'Adeyemi Brooks & Co',description:'Acquisition of a 75% stake in a West African freight and port-logistics group, including a staged earn-out and a regulatory merger filing in two jurisdictions.',
+     significance:'One of the largest logistics acquisitions in West Africa in 2025.',notable:'First use in the region of a cross-border earn-out held in a dual-currency escrow, with release tied to port-throughput milestones. Merger clearance was obtained in Nigeria and Ghana in parallel.',referable:'public',
+     client:{name:'Harbour Capital Partners',sector:'Private equity',country:'England',status:'Existing client',origination:'Existing relationship',relationshipPartner:'Howard Barrie'},
+     contacts:[{name:'Martin Keane',title:'Partner, Harbour Capital',email:'m.keane@example.com',phone:'+44 20 7946 0101',referee:true},{name:'Temi Balogun',title:'Investment Director',email:'t.balogun@example.com',phone:'+44 20 7946 0102',referee:false}],
+     originator:'Chuks B. Ibechukwu',leadPartner:'Howard Barrie',team:[T('Howard Barrie','Partner',142),T('Juanita Derex-Briggs','Counsel',260),T('Valentina Costa','Associate',318)],
+     localCounsel:[{firm:'Mensah Quaye & Partners',jurisdiction:'Ghana',lawyers:'Kofi Mensah, Ama Quaye',fees:'38000',recharged:true}],
+     fee:{arrangement:'Capped fee',quote:'300000',wip:'',bill:'300000',disbursements:'12400',invoiceDate:'2025-07-10',paid:'Paid in full',writeoffReasons:['Fee cap or fixed fee exceeded'],writeoffNote:'Earn-out negotiation ran four weeks longer than planned; cap agreed at instruction held.',approvedBy:'Chuks B. Ibechukwu'},
+     wf:['valentina','howard','approved']},
+    {matter:'LB-0388',name:'US$150m syndicated term loan for Lagos Breweries',practice:'Banking & Finance',type:'Financing',actingFor:'the mandated lead arrangers',instructed:'2025-03-02',signed:'2025-05-08',completed:'2025-05-20',value:'150000000',valueCcy:'USD',jurisdictions:'Nigeria, England',
+     counterparties:'Lagos Breweries plc',opposingCounsel:'Hollins Reid LLP',description:'Senior secured term facility to refinance existing debt and fund a new bottling plant.',significance:'Largest corporate loan to a Nigerian consumer-goods company in the first half of 2025.',referable:'public',
+     client:{name:'Meridian Bank',sector:'Financial services',country:'South Africa',status:'Existing client',origination:'Referral from another firm',relationshipPartner:'Chuks B. Ibechukwu'},
+     contacts:[{name:'Sarah Dlamini',title:'Head of Leveraged Finance',email:'s.dlamini@example.com',phone:'+44 20 7946 0103',referee:true}],
+     originator:'Chuks B. Ibechukwu',leadPartner:'Chuks B. Ibechukwu',team:[T('Chuks B. Ibechukwu','Partner',64),T('Juanita Derex-Briggs','Counsel',150),T('Valentina Costa','Associate',180)],localCounsel:[],
+     fee:{arrangement:'Hourly',quote:'',wip:'',bill:'150000',disbursements:'3100',invoiceDate:'2025-06-02',paid:'Paid in full',writeoffReasons:[],writeoffNote:''},
+     wf:['valentina','chuks','approved']},
+    {matter:'MB-0441',name:'Refinancing of Meridian Bank’s regional credit lines',practice:'Banking & Finance',type:'Refinancing',actingFor:'the borrower',instructed:'2025-08-01',signed:'2025-11-01',completed:'2025-11-18',value:'85000000',valueCcy:'USD',jurisdictions:'Nigeria, Kenya, South Africa',
+     counterparties:'Consortium of five development finance institutions',opposingCounsel:'Njoroge Kamau Advocates',description:'Amendment and extension of three regional credit lines into a single facility.',significance:'',referable:'anonymised',
+     client:{name:'Meridian Bank',sector:'Financial services',country:'South Africa',status:'Existing client',origination:'Existing relationship',relationshipPartner:'Chuks B. Ibechukwu'},
+     contacts:[{name:'Sarah Dlamini',title:'Head of Leveraged Finance',email:'s.dlamini@example.com',phone:'+44 20 7946 0104',referee:false}],
+     originator:'Chuks B. Ibechukwu',leadPartner:'Chuks B. Ibechukwu',team:[T('Chuks B. Ibechukwu','Partner',90),T('Juanita Derex-Briggs','Counsel',210),T('Valentina Costa','Associate',260)],
+     localCounsel:[{firm:'Kamau Otieno LLP',jurisdiction:'Kenya',lawyers:'Wanjiru Otieno',fees:'22000',recharged:false},{firm:'Pillay Naidoo Inc.',jurisdiction:'South Africa',lawyers:'Rajesh Pillay',fees:'18000',recharged:false}],
+     fee:{arrangement:'Fixed fee',quote:'120000',wip:'',bill:'120000',disbursements:'',invoiceDate:'2025-12-01',paid:'Invoiced, unpaid',writeoffReasons:['Fee cap or fixed fee exceeded','Scope grew beyond engagement letter','Training time for juniors'],writeoffNote:'Two extra jurisdictions added after the fixed fee was agreed; not re-scoped.',approvedBy:'Taofik Atolagbe'},
+     wf:['valentina','chuks','approved']},
+    {matter:'SV-0302',name:'Series B fundraising for Sava Health',practice:'Private Equity',type:'Fundraising',actingFor:'the company',instructed:'2024-09-10',signed:'2024-11-28',completed:'2024-12-12',value:'32000000',valueCcy:'USD',jurisdictions:'Nigeria, Delaware',
+     counterparties:'Lead investor Northgate Ventures and four co-investors',opposingCounsel:'Carter Whitlow LLP',description:'Preferred share issue and shareholder agreement restructure for a healthtech scale-up.',significance:'Largest Series B for a West African healthtech company in 2024.',referable:'public',
+     client:{name:'Sava Health',sector:'Technology',country:'Nigeria',status:'New client',origination:'Directory or website',relationshipPartner:'Howard Barrie'},
+     contacts:[{name:'Ngozi Eze',title:'Chief Executive',email:'ngozi@example.com',phone:'+44 20 7946 0105',referee:true}],
+     originator:'Howard Barrie',leadPartner:'Howard Barrie',team:[T('Howard Barrie','Partner',40),T('Valentina Costa','Associate',120)],localCounsel:[],
+     fee:{arrangement:'Hourly',quote:'80000',wip:'',bill:'62000',disbursements:'900',invoiceDate:'2025-01-08',paid:'Paid in full',writeoffReasons:['Relationship discount'],writeoffNote:'Discount agreed to win a new client with strong follow-on potential.',approvedBy:'Chuks B. Ibechukwu'},
+     wf:['valentina','howard','approved']},
+    {matter:'OS-0455',name:'Disposal of Olumo Solar’s mini-grid portfolio',practice:'Projects & Energy',type:'Disposal',actingFor:'the seller',instructed:'2025-10-06',signed:'2026-02-10',completed:'2026-03-27',value:'58000000',valueCcy:'USD',jurisdictions:'Nigeria',
+     counterparties:'Greenfield Infrastructure Fund',opposingCounsel:'Bello Harrow',description:'Sale of 42 operating mini-grids with associated power purchase agreements.',significance:'First portfolio sale of operating mini-grids in Nigeria.',referable:'public',
+     client:{name:'Olumo Solar',sector:'Energy',country:'Nigeria',status:'Returning client',origination:'Referral from a client',relationshipPartner:'Edward Baring'},
+     contacts:[{name:'Bisi Adewale',title:'General Counsel',email:'b.adewale@example.com',phone:'+44 20 7946 0106',referee:true}],
+     originator:'Edward Baring',leadPartner:'Edward Baring',team:[T('Edward Baring','Partner',110),T('Juanita Derex-Briggs','Counsel',190),T('Lami Basorun','Associate',230)],localCounsel:[],
+     fee:{arrangement:'Hourly',quote:'',wip:'',bill:'215000',disbursements:'5600',invoiceDate:'2026-04-09',paid:'Part paid',writeoffReasons:['Over-staffing or inefficiency'],writeoffNote:'Duplicated due diligence across two associates in the first month.',approvedBy:'Taofik Atolagbe'},
+     wf:['lami','edward','approved']},
+    {matter:'HC-0470',name:'Bolt-on acquisition of Kestrel Cold Chain',practice:'Corporate M&A',type:'Acquisition',actingFor:'the purchaser',instructed:'2026-01-19',signed:'2026-04-02',completed:'2026-04-30',value:'41000000',valueCcy:'USD',jurisdictions:'Nigeria, Ghana',
+     counterparties:'Kestrel Cold Chain founders',opposingCounsel:'Asante Legal',description:'Add-on acquisition for the Coastline platform.',significance:'',referable:'confidential',
+     client:{name:'Harbour Capital Partners',sector:'Private equity',country:'England',status:'Existing client',origination:'Existing relationship',relationshipPartner:'Howard Barrie'},
+     contacts:[{name:'Martin Keane',title:'Partner, Harbour Capital',email:'m.keane@example.com',phone:'+44 20 7946 0107',referee:false}],
+     originator:'Howard Barrie',leadPartner:'Howard Barrie',team:[T('Howard Barrie','Partner',48),T('Valentina Costa','Associate',150)],
+     localCounsel:[{firm:'Mensah Quaye & Partners',jurisdiction:'Ghana',lawyers:'Ama Quaye',fees:'14000',recharged:true}],
+     fee:{arrangement:'Hourly',quote:'',wip:'',bill:'74000',disbursements:'1500',invoiceDate:'2026-05-12',paid:'Paid in full',writeoffReasons:[],writeoffNote:''},
+     wf:['valentina','howard','approved']},
+    {matter:'DG-0461',name:'Restructuring of Delta Gas’s bond obligations',practice:'Restructuring',type:'Restructuring',actingFor:'the noteholders’ committee',instructed:'2025-06-02',signed:'2026-01-20',completed:'2026-02-14',value:'300000000',valueCcy:'USD',jurisdictions:'Nigeria, England, New York',
+     counterparties:'Delta Gas Ltd',opposingCounsel:'Whitfield Crane LLP',description:'Consensual restructuring of senior notes, including a debt-for-equity swap and maturity extension.',significance:'Among the first cross-border noteholder-led restructurings of a Nigerian issuer.',notable:'Debt-for-equity swap implemented through an English scheme of arrangement recognised in Nigeria, with a New York-law exchange offer running alongside.',referable:'public',
+     client:{name:'Ad hoc noteholder committee',sector:'Financial services',country:'England',status:'New client',origination:'Pitch or tender',relationshipPartner:'Edward Baring'},
+     contacts:[{name:'James Porter',title:'Committee chair',email:'j.porter@example.com',phone:'+44 20 7946 0108',referee:true}],
+     originator:'Chuks B. Ibechukwu',leadPartner:'Edward Baring',team:[T('Edward Baring','Partner',260),T('Chuks B. Ibechukwu','Partner',80),T('Juanita Derex-Briggs','Counsel',340),T('Lami Basorun','Associate',420)],
+     localCounsel:[{firm:'Grayson Ellis LLP',jurisdiction:'New York',lawyers:'Dana Ellis',fees:'65000',recharged:false}],
+     fee:{arrangement:'Capped fee',quote:'380000',wip:'',bill:'380000',disbursements:'22000',invoiceDate:'2026-03-01',paid:'Invoiced, unpaid',writeoffReasons:['Fee cap or fixed fee exceeded','Deal delayed or aborted'],writeoffNote:'Negotiations stalled for three months; the cap was agreed before the delay and could not be reopened.',approvedBy:'Chuks B. Ibechukwu'},
+     wf:['lami','edward','approved']},
+    {matter:'AP-0479',name:'Lease portfolio acquisition for Apex Retail',practice:'Real Estate',type:'Acquisition',actingFor:'the tenant',instructed:'2026-05-04',signed:'2026-08-01',completed:'2026-08-21',value:'12500000',valueCcy:'USD',jurisdictions:'Nigeria',
+     counterparties:'Victoria Island Properties',opposingCounsel:'Okon & Associates',description:'Acquisition of long leases over six retail sites in Lagos.',significance:'',referable:'anonymised',
+     client:{name:'Apex Retail',sector:'Consumer and retail',country:'Nigeria',status:'New client',origination:'Referral from a client',relationshipPartner:'Edward Baring'},
+     contacts:[{name:'Halima Musa',title:'Property Director',email:'h.musa@example.com',phone:'+44 20 7946 0109',referee:false}],
+     originator:'Lami Basorun',leadPartner:'Edward Baring',team:[T('Edward Baring','Partner',30),T('Lami Basorun','Associate',95)],localCounsel:[],
+     fee:{arrangement:'Fixed fee',quote:'45000',wip:'',bill:'45000',disbursements:'2000',invoiceDate:'2026-09-01',paid:'Invoiced, unpaid',writeoffReasons:[],writeoffNote:''},
+     wf:['lami','edward','approved']},
+    // in flight: waiting for Howard's review
+    {matter:'HC-0488',name:'Acquisition of Nimbus Payments by Harbour Capital',practice:'Private Equity',type:'Acquisition',actingFor:'the purchaser',instructed:'2026-05-10',signed:'2026-08-01',completed:'2026-09-12',value:'65000000',valueCcy:'USD',jurisdictions:'Nigeria, Kenya',
+     counterparties:'Nimbus Payments founders and seed investors',opposingCounsel:'Lakeside Legal',description:'Acquisition of a majority stake in a payments processor operating in Nigeria and Kenya, with central bank change-of-control approvals in both.',significance:'First private equity buyout of a licensed payments processor in both markets at once.',referable:'public',
+     client:{name:'Harbour Capital Partners',sector:'Private equity',country:'England',status:'Existing client',origination:'Existing relationship',relationshipPartner:'Howard Barrie'},
+     contacts:[{name:'Martin Keane',title:'Partner, Harbour Capital',email:'m.keane@example.com',phone:'+44 20 7946 0110',referee:true}],
+     originator:'Howard Barrie',leadPartner:'Howard Barrie',team:[T('Howard Barrie','Partner',60),T('Valentina Costa','Associate',180)],
+     localCounsel:[{firm:'Kamau Otieno LLP',jurisdiction:'Kenya',lawyers:'Wanjiru Otieno',fees:'16000',recharged:true}],
+     fee:{arrangement:'Hourly',quote:'',wip:'',bill:'88000',disbursements:'2400',invoiceDate:'2026-09-20',paid:'Invoiced, unpaid',writeoffReasons:['Relationship discount'],writeoffNote:'Agreed discount on the Kenyan regulatory workstream.',approvedBy:'Howard Barrie'},
+     wf:['valentina','howard','in_review']},
+    // returned to Valentina by Howard
+    {matter:'SV-0493',name:'Joint venture between Sava Health and Medline Pharmacies',practice:'Corporate M&A',type:'Joint venture',actingFor:'Sava Health',instructed:'2026-06-01',signed:'2026-08-20',completed:'2026-09-05',value:'8000000',valueCcy:'USD',jurisdictions:'Nigeria',
+     counterparties:'Medline Pharmacies Ltd',opposingCounsel:'',description:'Joint venture to roll out telehealth kiosks across Medline branches.',significance:'',referable:'public',
+     client:{name:'Sava Health',sector:'Technology',country:'Nigeria',status:'Existing client',origination:'Existing relationship',relationshipPartner:'Howard Barrie'},
+     contacts:[{name:'Ngozi Eze',title:'Chief Executive',email:'ngozi@example.com',phone:'+44 20 7946 0111',referee:false}],
+     originator:'Juanita Derex-Briggs',leadPartner:'Howard Barrie',team:[T('Howard Barrie','Partner',12),T('Juanita Derex-Briggs','Counsel',40),T('Valentina Costa','Associate',110)],localCounsel:[],
+     fee:{arrangement:'Hourly',quote:'',wip:'',bill:'55000',disbursements:'',invoiceDate:'',paid:'Not yet invoiced',writeoffReasons:[],writeoffNote:''},
+     wf:['valentina','howard','returned','Please add the reason for the write-off, and who advised Medline. BD will need both.']},
+    // waiting for Juanita's review
+    {matter:'CH-0496',name:'Refinancing of Crestview Hotels’ term debt',practice:'Banking & Finance',type:'Refinancing',actingFor:'the borrower',instructed:'2026-06-15',signed:'2026-09-01',completed:'2026-09-18',value:'22000000',valueCcy:'USD',jurisdictions:'Nigeria',
+     counterparties:'First Coast Bank',opposingCounsel:'Obi & Partners',description:'Refinancing of an existing term loan secured on three hotel properties.',significance:'',referable:'anonymised',
+     client:{name:'Crestview Hotels',sector:'Hospitality',country:'Nigeria',status:'New client',origination:'Pitch or tender',relationshipPartner:'Chuks B. Ibechukwu'},
+     contacts:[{name:'Femi Coker',title:'Finance Director',email:'f.coker@example.com',phone:'+44 20 7946 0112',referee:true}],
+     originator:'Chuks B. Ibechukwu',leadPartner:'Chuks B. Ibechukwu',team:[T('Chuks B. Ibechukwu','Partner',18),T('Juanita Derex-Briggs','Counsel',35),T('Lami Basorun','Associate',90)],localCounsel:[],
+     fee:{arrangement:'Fixed fee',quote:'50000',wip:'',bill:'50000',disbursements:'800',invoiceDate:'2026-09-22',paid:'Invoiced, unpaid',writeoffReasons:[],writeoffNote:''},
+     wf:['lami','juanita','in_review']},
+  ];
+  const LC_RATINGS={'Mensah Quaye & Partners':['5','4'],'Kamau Otieno LLP':['4','4'],'Pillay Naidoo Inc.':['3'],'Grayson Ellis LLP':['4']};
+  D.forEach(d=>(d.localCounsel||[]).forEach(l=>{if(!l.rating&&LC_RATINGS[l.firm]?.length) l.rating=LC_RATINGS[l.firm].shift()}));
+  const out=D.map(({wf:[prep,rev,status,note],...d},i)=>{
+    const sent=d.completed+'T09:00:00Z', done=(d.fee.invoiceDate||d.completed)+'T09:00:00Z';
+    const history=[{at:d.completed+'T08:00:00Z',by:prep,action:'created'},{at:sent,by:prep,action:'submitted',to:rev}];
+    const x={...d,id:'s'+(i+1),preparedBy:prep,reviewer:rev,status,submittedAt:sent,updatedAt:sent,history};
+    if(status==='approved'){freezeCosts(x);Object.assign(x,{approvedBy:rev,approvedAt:done,updatedAt:done});history.push({at:done,by:rev,action:'approved'})}
+    if(status==='returned'){Object.assign(x,{reviewNote:note,updatedAt:done});history.push({at:done,by:rev,action:'returned',note})}
+    return x;
+  });
+  store.set(KEY,out); return out;
+}
+route();
+</script>
+</body>
+</html>
